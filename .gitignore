@@ -1,0 +1,14 @@
+# Node & build artifacts
+node_modules/
+dist/
+.pnpm-store/
+
+# Output files
+*.js
+*.js.map
+*.d.ts
+
+# Puzzle files (anywhere in the repo)
+*.csv
+*.db
+
