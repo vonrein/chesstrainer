@@ -1,11 +1,15 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import sqlite3
+import os
 
-app = Flask(__name__)
+# Adjust this to your project root if needed
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+app = Flask(__name__, static_folder=PROJECT_ROOT, static_url_path='')
 CORS(app)
 
-DATABASE = 'puzzles.db'
+DATABASE = os.path.join(os.path.dirname(__file__), 'puzzles.db')
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -16,7 +20,7 @@ def get_db():
 def get_puzzles():
     rating_lt = request.args.get('rating_lt', type=int)
     rating_gt = request.args.get('rating_gt', type=int)
-    theme = request.args.get('theme')  # comma-separated or substring match
+    theme = request.args.get('theme')
     limit = request.args.get('limit', 10, type=int)
 
     db = get_db()
@@ -40,6 +44,16 @@ def get_puzzles():
     puzzles = [dict(row) for row in cursor.fetchall()]
     db.close()
     return jsonify(puzzles)
+
+# Serve HTML entrypoint
+@app.route('/')
+def serve_index():
+    return send_from_directory(PROJECT_ROOT, 'puzzle.html')
+
+# Serve other static files (JS, CSS, images)
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(PROJECT_ROOT, path)
 
 if __name__ == '__main__':
     app.run(debug=True)
