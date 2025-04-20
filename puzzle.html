@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess Puzzle Trainer</title>
+  <link rel="stylesheet" href="assets/chessground.css" />
+  <link rel="stylesheet" href="assets/theme.css" />
+  <link rel="stylesheet" href="assets/examples.css" />
+  <style>
+    #board-wrapper {
+      width: 400px;
+      height: 400px;
+      margin: 2em auto;
+      position: relative;
+    }
+    body {
+      text-align: center;
+      font-family: sans-serif;
+    }
+    button {
+      margin: 1em;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="board-wrapper">
+    <div id="board" class="blue"></div>
+  </div>
+
+  <button id="loadPuzzleBtn">Load Puzzle</button>
+  <p id="status">Click "Load Puzzle" to begin.</p>
+
+  <script type="module" src="./dist/puzzle.js"></script>
+</body>
+</html>
+

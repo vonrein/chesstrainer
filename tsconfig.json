@@ -7,6 +7,6 @@
     "esModuleInterop": true,
     "outDir": "dist"
   },
-  "include": ["main.ts"]
+  "include": ["*.ts"]
 }
 

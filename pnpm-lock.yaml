@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      chess.js:
+        specifier: ^1.0.0
+        version: 1.2.0
       chessground:
         specifier: ^9.1.1
         version: 9.1.1
@@ -171,6 +174,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  chess.js@1.2.0:
+    resolution: {integrity: sha512-QWdfpAkMslQ48hDDoEzEko6GbYTAKKx4UdXAPEF8nFnAuqp+woyL8LHSbziRP8u1aMAbnlOF0YkXF4ui0Nsubg==}
+
   chessground@9.1.1:
     resolution: {integrity: sha512-X4xrBICrixaLATCn+jGEzk58UXcas+9QqJnwVq9nT7AaX2M1CJLMA0vC7noG0s6Tr2zoAHZ1FOviE5b05MgduQ==}
 
@@ -260,6 +266,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.2':
     optional: true
+
+  chess.js@1.2.0: {}
 
   chessground@9.1.1: {}
 
