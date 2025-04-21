@@ -47,7 +47,7 @@ try:
                 row['Themes'], row['GameUrl'], row['OpeningTags']
             ))
             count += 1
-            if count % 10000 == 0:
+            if count % 1000000 == 0:
                 print(f"⏳ {count} rows inserted...")
 
     conn.commit()

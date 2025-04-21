@@ -1,23 +1,67 @@
 import { Chess } from 'chess.js';
+import { ChessInstance, SQUARES } from "chess.js";
 import { Chessground } from 'chessground';
 import type { Config } from 'chessground/config';
 
-let chess: any;
-let moves: string[] = [];
-let moveIndex = 0;
-let ground: ReturnType<typeof Chessground>;
 
-function computeDests() {
-  const dests = new Map<string, string[]>();
-  for (const file of "abcdefgh") {
-    for (const rank of "12345678") {
-      const square = file + rank;
-      const legalMoves = chess.moves({ square, verbose: true });
-      if (legalMoves.length)
-        dests.set(square, legalMoves.map(m => m.to));
-    }
+let chess: any;
+let moveQueue: string[] = [];
+let ground: ReturnType<typeof Chessground>;
+let playerColor: 'white' | 'black';
+let activePuzzle = false;
+let puzzleURL: string = ""
+chess = new Chess()
+function clearGround() {
+  
+// Initialize board without any puzzle
+
+ground = Chessground(document.getElementById('board')!, {
+  orientation: "white",
+  highlight: {
+    lastMove: true,
+    check: true
+  },
+  animation: {
+    enabled: true,
+    duration: 200
+  },
+  movable: {
+    free: false
+  },
+  draggable: {
+        showGhost: true,
+  },
+  premovable: {
+    enabled: false
+  },
+  sprite: {
+    url: 'assets/images/pieces/merida/{piece}.svg'
   }
+ });
+ 
+  ground.set({
+    dests: computeDests()
+  })
+}
+clearGround()
+
+
+function computeDests(): Map<Key, Key[]> {
+  const dests = new Map();
+  SQUARES.forEach((s) => {
+    const ms = chess.moves({ square: s, verbose: true });
+
+    if (ms.length)
+      dests.set(
+        s,
+        ms.map((m) => m.to),
+      );
+  });
   return dests;
+}
+
+function toColor(): String {
+  return chess.turn() === "w" ? "white" : "black";
 }
 
 function showStatus(msg: string) {
@@ -25,74 +69,130 @@ function showStatus(msg: string) {
 }
 
 function loadPuzzle() {
+	
   fetch('http://localhost:5000/api/puzzles?rating_lt=1600&limit=1')
     .then(res => res.json())
     .then(([puzzle]) => {
-      console.log("\uD83C\uDF29\uFE0F Loaded puzzle:", puzzle.id, puzzle);
+      console.log("🌩️ Loaded puzzle:", puzzle.id, puzzle);
+      activePuzzle = true;
+      puzzleURL = "https://lichess.org/training/" + puzzle.id;
 
+      // Reset game and move queue
       chess = new Chess(puzzle.fen);
-      moves = puzzle.moves.split(' ');
-      moveIndex = 0;
+      moveQueue = puzzle.moves.split(' ');
 
-      chess.move(moves[moveIndex++]); // opponent's first move
-
-      if (ground) ground.destroy();
-
-      ground = Chessground(document.getElementById('board')!, {
-        fen: chess.fen(),
-        orientation: chess.turn() === 'w' ? 'white' : 'black',
-        highlight: {
-          lastMove: true,
-          check: true
-        },
-        animation: {
-          enabled: true,
-          duration: 200
-        },
-        movable: {
-          color: chess.turn() === 'w' ? 'white' : 'black',
-          dests: computeDests(),
-          free: false
-        },
-        sprite: {
-          url: 'assets/images/pieces/merida/{piece}.svg'
-        },
-        events: {
-          move(from, to) {
-            const move = chess.move({ from, to, promotion: 'q' });
-            if (!move) return showStatus("❌ Illegal move");
-
-            const expected = moves[moveIndex++];
-            const userMove = move.from + move.to;
-            if (userMove !== expected && move.san !== expected) {
-              showStatus("❌ Wrong move");
-              return;
-            }
-
-            if (moveIndex < moves.length) {
-              chess.move(moves[moveIndex++]); // next opponent move
-            }
-
-            if (chess.isGameOver()) {
-              showStatus("✅ Puzzle complete!");
-            } else {
-              ground.set({
-                fen: chess.fen(),
-                movable: {
-                  color: chess.turn(),
-                  dests: computeDests(),
-                  free: false
-                }
-              });
-              showStatus("✓ Your move");
-            }
-          }
-        }
-      });
-
-      showStatus("Your move");
+      // Apply the opponent's move after a short delay (optional)
+      const opponentMove = moveQueue.shift()!;
+      startPuzzle(opponentMove)
     });
 }
 
-document.getElementById("board").classList.add("merida")//I need this to add the piece theme
+function startPuzzle(initMove: string) {
+	clearGround()
+  ground.set({
+    fen: chess.fen(),
+    viewOnly: false,
+    orientation: 'white',
+    turnColor: 'white'
+  });
+
+  const result = chess.move(initMove);
+
+  setTimeout(()=> ground.move(initMove.slice(0, 2), initMove.slice(2)),500)
+
+  playerColor = toColor();
+
+  ground.set({
+    viewOnly: false,
+    orientation: playerColor,
+    turnColor: playerColor,
+    movable: {
+      color: playerColor,
+      dests: computeDests(),
+      free: false
+    },
+    events: {
+      move(from, to) {
+        
+        handlePuzzle(from, to);
+      }
+    }
+  });
+
+  showStatus(playerColor + " to move");
+}
+
+
+function handlePuzzle(from, to){
+	if (!activePuzzle) return;
+	
+      const move = chess.move({ from, to, promotion: 'q' });
+      if (!move) return showStatus("❌ Illegal move");
+
+      const expected = moveQueue[0];
+      const userMove = move.from + move.to;
+      if (userMove !== expected && move.san !== expected && !chess.isGameOver()) {
+        chess.undo();
+        handleIncorrect();
+        updateBoard()
+        return showStatus("❌ Wrong move");
+      }
+
+      showStatus("✅ Correct move! Go on!");
+      updateBoard()
+      moveQueue.shift();
+
+      if (chess.isGameOver() || moveQueue.length === 0) {
+        showStatus("✅ Puzzle complete!");
+        activePuzzle = false
+        handleCompleted()
+       
+        
+        
+      } else {
+        chess.move(moveQueue.shift());
+      }
+
+      updateBoard();
+ }
+
+function handleIncorrect(){
+	console.log("incorrect")
+	ground.set({
+		fen:chess.fen(),
+		orientation: playerColor,
+    turnColor: playerColor,
+    movable: {
+      color: playerColor,
+      dests: computeDests(),
+      free: false
+    }
+	})
+}
+
+function handleCompleted(){
+	 showStatus(puzzleURL)
+	 
+	
+}
+
+
+
+
+function updateBoard() {
+  ground.set({
+    fen: chess.fen(),
+    orientation: playerColor,
+    turnColor: playerColor,
+    movable: {
+      color: playerColor,
+      dests: computeDests(),
+      free: false
+    }
+  });
+}
+
+
+
+document.getElementById("board")!.classList.add("merida");
 document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle);
