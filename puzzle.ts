@@ -11,7 +11,8 @@ const gt = params.get("gt") ?? "1000";      // optional: lower bound
 const limit = params.get("limit") ?? "1";   // default to 1
 const theme = params.get("theme") ?? "";   // default to ""
 
-const query = `?lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
+const query = `lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
+console.log(theme)
 
 let chess: any;
 let moveQueue: string[] = [];
@@ -44,10 +45,10 @@ ground = Chessground(document.getElementById('board')!, {
   },
   premovable: {
     enabled: false
-  },
+  }/*,
   sprite: {
-    url: 'assets/images/pieces/merida/{piece}.svg'
-  }
+    url: `assets/images/pieces/merida/${piece}.svg`
+  }*/
  });
  
   ground.set({
@@ -81,12 +82,13 @@ function showStatus(msg: string) {
 
 function loadPuzzle() {
 	
-  fetch('http://localhost:5000/api/puzzles?${query}')
+  fetch(`http://localhost:5000/api/puzzles?${query}`)
     .then(res => res.json())
     .then(([puzzle]) => {
       
       activePuzzle = true;
       puzzleURL = "https://lichess.org/training/" + puzzle.id;
+      console.log("🌩️ Loaded puzzle:", puzzle.id, puzzle);
 
       // Reset game and move queue
       chess = new Chess(puzzle.fen);
@@ -135,7 +137,7 @@ setTimeout(()=>{
   },1000)
 }
 
-
+/*
 function handlePuzzle(from, to){
 	if (!activePuzzle) return;
 	
@@ -167,7 +169,46 @@ function handlePuzzle(from, to){
       }
 
       updateBoard();
- }
+ }*/
+ 
+ function handlePuzzle(from, to) {
+  if (!activePuzzle) return;
+
+  const expected = moveQueue[0];
+  const promotion = expected.length === 5 ? expected[4] : undefined;
+
+  const move = chess.move({ from, to, promotion });
+  if (!move) return showStatus("❌ Illegal move");
+
+  const userMove = move.from + move.to + (move.promotion ?? '');
+  if (userMove !== expected && move.san !== expected && !chess.isGameOver()) {
+    chess.undo();
+    handleIncorrect();
+    updateBoard();
+    return showStatus("❌ Wrong move");
+  }
+
+  showStatus("✅ Correct move! Go on!");
+  updateBoard();
+  moveQueue.shift();
+
+  if (chess.isGameOver() || moveQueue.length === 0) {
+    showStatus("✅ Puzzle complete!");
+    activePuzzle = false;
+    handleCompleted();
+  } else {
+    const opponentMoveStr = moveQueue.shift();
+    const oppFrom = opponentMoveStr.slice(0, 2);
+    const oppTo = opponentMoveStr.slice(2, 4);
+    const oppPromotion = opponentMoveStr.length === 5 ? opponentMoveStr[4] : undefined;
+
+    chess.move({ from: oppFrom, to: oppTo, promotion: oppPromotion });
+    //ground.move(oppFrom, oppTo);
+    updateBoard()
+  }
+
+  updateBoard();
+}
 
 function handleIncorrect(){
 	console.log("incorrect")
