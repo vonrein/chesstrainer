@@ -4,18 +4,29 @@ import { Chessground } from 'chessground';
 import type { Config } from 'chessground/config';
 
 
+const params = new URLSearchParams(window.location.search);
+
+const lt = params.get("lt") ?? "1600";      // default to 1600
+const gt = params.get("gt") ?? "1000";      // optional: lower bound
+const limit = params.get("limit") ?? "1";   // default to 1
+const theme = params.get("theme") ?? "";   // default to ""
+
+const query = `?lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
+
 let chess: any;
 let moveQueue: string[] = [];
 let ground: ReturnType<typeof Chessground>;
 let playerColor: 'white' | 'black';
 let activePuzzle = false;
 let puzzleURL: string = ""
+
 chess = new Chess()
 function clearGround() {
   
 // Initialize board without any puzzle
 
 ground = Chessground(document.getElementById('board')!, {
+	fen:"",
   orientation: "white",
   highlight: {
     lastMove: true,
@@ -70,10 +81,10 @@ function showStatus(msg: string) {
 
 function loadPuzzle() {
 	
-  fetch('http://localhost:5000/api/puzzles?rating_lt=1600&limit=1')
+  fetch('http://localhost:5000/api/puzzles?${query}')
     .then(res => res.json())
     .then(([puzzle]) => {
-      console.log("🌩️ Loaded puzzle:", puzzle.id, puzzle);
+      
       activePuzzle = true;
       puzzleURL = "https://lichess.org/training/" + puzzle.id;
 
@@ -92,13 +103,13 @@ function startPuzzle(initMove: string) {
   ground.set({
     fen: chess.fen(),
     viewOnly: false,
-    orientation: 'white',
+    orientation: chess.turn() ==="w"?"black":"white",
     turnColor: 'white'
   });
+setTimeout(()=>{
+	  chess.move(initMove);
+	  ground.move(initMove.slice(0, 2), initMove.slice(2))
 
-  const result = chess.move(initMove);
-
-  setTimeout(()=> ground.move(initMove.slice(0, 2), initMove.slice(2)),500)
 
   playerColor = toColor();
 
@@ -120,6 +131,8 @@ function startPuzzle(initMove: string) {
   });
 
   showStatus(playerColor + " to move");
+  
+  },1000)
 }
 
 

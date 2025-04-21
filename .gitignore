@@ -11,4 +11,5 @@ dist/
 # Puzzle files (anywhere in the repo)
 *.csv
 *.db
+*.zst
 

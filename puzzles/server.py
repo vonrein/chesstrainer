@@ -18,8 +18,8 @@ def get_db():
 
 @app.route('/api/puzzles')
 def get_puzzles():
-    rating_lt = request.args.get('rating_lt', type=int)
-    rating_gt = request.args.get('rating_gt', type=int)
+    rating_lt = request.args.get('lt', type=int)
+    rating_gt = request.args.get('gt', type=int)
     theme = request.args.get('theme')
     limit = request.args.get('limit', 10, type=int)
 
