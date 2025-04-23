@@ -1,272 +1,143 @@
-import { Chess } from 'chess.js';
-import {  SQUARES } from "chess.js";
-import { Chessground } from 'chessground';
-import type { Config } from 'chessground/config';
+import { Chess } from 'chess.js'
+import { SQUARES, Key } from 'chess.js'
+import { Chessground, Config } from 'chessground'
 
+// URL query setup
+const params = new URLSearchParams(window.location.search)
+const lt = params.get('lt') ?? '1600'
+const gt = params.get('gt') ?? '1000'
+const limit = params.get('limit') ?? '1'
+const theme = params.get('theme') ?? ''
+const id = params.get('id')
+const query = id != null
+  ? `id=${id}`
+  : `lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`
 
-const params = new URLSearchParams(window.location.search);
+let chess = new Chess()
+let moveQueue: string[] = []
+let ground: ReturnType<typeof Chessground>
+let playerColor: 'white' | 'black'
+let activePuzzle = false
+let puzzleURL = ''
 
-const lt = params.get("lt") ?? "1600";      // default to 1600
-const gt = params.get("gt") ?? "1000";      // optional: lower bound
-const limit = params.get("limit") ?? "1";   // default to 1
-const theme = params.get("theme") ?? "";   // default to ""
-const id = params.get("id")
-
-const query = id != null ? `id=${id}`:`lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
-
-let chess: any;
-let moveQueue: string[] = [];
-let ground: ReturnType<typeof Chessground>;
-let playerColor: 'white' | 'black';
-let activePuzzle = false;
-let puzzleURL: string = ""
-let humanMove:boolean = true
-
-chess = new Chess()
-function clearGround() {
-  humanMove = true
-  
-// Initialize board without any puzzle
-
-ground = Chessground(document.getElementById('board')!, {
-	fen:"",
-  orientation: "white",
-  highlight: {
-    lastMove: true,
-    check: true
-  },
-  animation: {
-    enabled: true,
-    duration: 200
-  },
-  movable: {
-    free: false
-  },
-  draggable: {
-        showGhost: true,
-  },
-  premovable: {
-    enabled: false
-  }
- });
- 
-  ground.set({
-    dests: computeDests()
-  })
+// 1) Initialize Chessground once
+function initGround() {
+  ground = Chessground(
+    document.getElementById('board')!,
+    {
+      fen: '',
+      orientation: 'white',
+      viewOnly: false,
+      highlight: { lastMove: true, check: true },
+      animation: { enabled: true, duration: 200 },
+      draggable: { showGhost: true },
+      movable: { free: false, color: 'white', dests: new Map<Key, Key[]>() },
+      events: {}
+    }
+  )
 }
-clearGround()
+initGround()
 
-function parseUCIMove(uci: string) {
-  return {
-    from: uci.slice(0, 2),
-    to: uci.slice(2, 4),
-    promotion: uci.length === 5 ? uci[4] : undefined
-  };
-}
-
-
-function makeMove(uci: string, quite :boolean = false) {
-  const { from, to, promotion } = parseUCIMove(uci);
-  const move = chess.move({ from, to, promotion });
-  if(!quite)ground.move(from, to);
-  updateBoard()
-  return move
-}
-
-
-
-
-function computeDests(): Map<Key, Key[]> {
-  const dests = new Map();
+// 2) Compute legal destinations
+function computeDests() {
+  const dests = new Map<Key, Key[]>()
   SQUARES.forEach((s) => {
-    const ms = chess.moves({ square: s, verbose: true });
-
-    if (ms.length)
-      dests.set(
-        s,
-        ms.map((m) => m.to),
-      );
-  });
-  return dests;
+    const moves = chess.moves({ square: s, verbose: true })
+    if (moves.length) dests.set(s, moves.map((m) => m.to))
+  })
+  return dests
 }
 
-function toColor(): 'white' | 'black' {
-  return chess.turn() === "w" ? "white" : "black";
-}
-
-function showStatus(msg: string) {
-  document.getElementById('status')!.textContent = msg;
-}
-
-
-function loadPuzzle() {
-	
-  fetch(`http://localhost:5000/api/puzzles?${query}`)
-    .then(res => res.json())
-    .then(([puzzle]) => {
-      
-      activePuzzle = true;
-      puzzleURL = "https://lichess.org/training/" + puzzle.id;
-      console.log("🌩️ Loaded puzzle:", puzzle.id, puzzle);
-
-      // Reset game and move queue
-      chess = new Chess(puzzle.fen);
-      moveQueue = puzzle.moves.split(' ');
-
-      // Apply the opponent's move after a short delay (optional)
-      const opponentMove = moveQueue.shift()!;
-      startPuzzle(puzzle.fen, opponentMove)
-    });
-}
-
-function startPuzzle(initFen:string, initMove: string) {
-	clearGround()
-	
-	playerColor = initFen.split(" ")[1] === "w" ? "black" : "white";
-  ground.set({
-    fen: initFen,
-    viewOnly: false,
-    orientation: playerColor
-  });
-setTimeout(()=>{
-	  makeMove(initMove)
-
-
-  playerColor = toColor();
-
-  ground.set({
-    viewOnly: false,
-    orientation: playerColor,
-    turnColor: playerColor,
-    movable: {
-      color: playerColor,
-      dests: computeDests(),
-      free: false
-    },
-    events: {
-      move(from, to) {
-        if(handlePuzzle(from, to))
-        
-          puzzleContinue() //opponent move
-
-      }
-    }
-  });
-
-  showStatus(playerColor + " to move");
-  
-  },1000)
-}
-
- function handlePuzzle (from: string, to:string) : boolean {
-  if ( !activePuzzle) return false;
-  console.log(1)
-  console.log(moveQueue)
-  
-
-  const expected = moveQueue[0];
-  const promotion = expected.length === 5 ? expected[4] : undefined;
-
-  const userMove = from + to + (promotion ?? '');
-
-  
-  
-  chess.move({from,to,promotion}) //try move first internaly
-
-  
-  
-  if (userMove !== expected && !chess.isGameOver()) {
-    handleIncorrect();
-    showStatus("❌ Wrong move");
-    return false
-  }
-  
-  //chess.undo()
-  showStatus("✅ Correct move! Go on!");
-  updateBoard()
-  moveQueue.shift()
-
-
-  //makeMove(moveQueue.shift()!, true)
-
-  if (chess.isGameOver() || moveQueue.length === 0) {
-    showStatus("✅ Puzzle complete!");
-    activePuzzle = false;
-    handleCompleted();
-    return false //no puzzle continuation  needed
-    
-  }
-  ground.set({
-    events: {
-      move(from, to) {
-        return
-  
-      }
-    }
-    })
-  humanMove = false
-  return true;
-}
-
-function puzzleContinue(){
-  console.log(2)
-  console.log(moveQueue)
-  
-  
-  makeMove(moveQueue.shift()!, true);//opponent move
-  humanMove = true
-
-  ground.set({
-  events: {
-    move(from, to) {
-      if(handlePuzzle(from, to))
-      
-        puzzleContinue() //opponent move
-
-    }
-  }
-})
-
-
-}
-
-
-
-function handleIncorrect(){
-	console.log("incorrect")
-	chess.undo()
-	ground.set({
-		fen:chess.fen(),
-		orientation: playerColor,
-    turnColor: playerColor,
-    movable: {
-      color: playerColor,
-      dests: computeDests(),
-      free: false
-    }
-	})
-  updateBoard()
-}
-
-function handleCompleted(){
-	 showStatus(puzzleURL)
-	 
-	
-}
-
-function updateBoard() {
+// 3) Central updater with default empty options
+function updateGround(options: Partial<Config> = {}) {
   ground.set({
     fen: chess.fen(),
     orientation: playerColor,
     turnColor: playerColor,
-    movable: {
-      dests: computeDests(),
-      free: false
-    }
-  });
+    movable: { color: playerColor, dests: computeDests(), free: false },
+    events: {},
+    ...options
+  })
 }
 
+// 4) Parse UCI moves
+function parseUCIMove(uci: string) {
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }
+}
 
+// 5) Execute moves on chess.js and Chessground
+function makeMove(uci: string, quiet = false) {
+  const { from, to, promotion } = parseUCIMove(uci)
+  chess.move({ from, to, promotion })
+  if (!quiet) ground.move(from, to)
+  updateGround()
+}
 
-document.getElementById("board")!.classList.add("merida");
-document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle);
+// 6) Load puzzle data
+function loadPuzzle() {
+  fetch(`http://localhost:5000/api/puzzles?${query}`)
+    .then((r) => r.json())
+    .then(([p]) => {
+      activePuzzle = true
+      puzzleURL = 'https://lichess.org/training/' + p.id
+      chess = new Chess(p.fen)
+      moveQueue = p.moves.split(' ')
+      startPuzzle(p.fen, moveQueue.shift()!)
+    })
+}
+
+// 7) Begin puzzle sequence
+function startPuzzle(initFen: string, oppUci: string) {
+  chess.load(initFen)
+  playerColor = initFen.split(' ')[1] === 'w' ? 'black' : 'white'
+  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false })
+
+  setTimeout(() => {
+    makeMove(oppUci, true)
+    playerColor = chess.turn() === 'w' ? 'white' : 'black'
+    updateGround({ events: { move: onUserMove } })
+    showStatus(`${playerColor} to move`)
+  }, 500)
+}
+
+// 8) Handle player's move
+function onUserMove(from: string, to: string) {
+  if (!activePuzzle) return false
+  const expected = moveQueue[0]!
+  const uci = from + to + (expected[4] || '')
+  chess.move({ from, to, promotion: expected[4] })
+
+  if (uci !== expected && !chess.isGameOver()) {
+    chess.undo()
+    showStatus('❌ Wrong move')
+    updateGround()
+    return false
+  }
+
+  moveQueue.shift()
+  showStatus(moveQueue.length ? '✅ Correct, go on!' : '✅ Puzzle complete!')
+  updateGround({ events: {} })
+
+  if (!moveQueue.length || chess.isGameOver()) {
+    activePuzzle = false
+    showStatus(puzzleURL)
+    return false
+  }
+
+  setTimeout(() => {
+    makeMove(moveQueue.shift()!, true)
+    playerColor = chess.turn() === 'w' ? 'white' : 'black'
+    updateGround({ events: { move: onUserMove } })
+    showStatus(`${playerColor} to move`)
+  }, 500)
+
+  return true
+}
+
+// Status display
+function showStatus(msg: string) {
+  document.getElementById('status')!.textContent = msg
+}
+
+document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
+document.getElementById('board')!.classList.add('merida')
