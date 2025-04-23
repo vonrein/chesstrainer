@@ -22,10 +22,15 @@ def get_puzzles():
     rating_gt = request.args.get('gt', type=int)
     theme = request.args.get('theme')
     limit = request.args.get('limit', 10, type=int)
+    puzzleid = request.args.get("id")
 
     db = get_db()
     query = 'SELECT id, fen, moves, rating, themes FROM puzzles WHERE 1=1'
     params = []
+
+    if puzzleid:
+        query += " AND id = ?"
+        params.append(puzzleid)
 
     if rating_lt:
         query += ' AND rating < ?'

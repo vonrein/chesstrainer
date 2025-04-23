@@ -10,8 +10,9 @@ const lt = params.get("lt") ?? "1600";      // default to 1600
 const gt = params.get("gt") ?? "1000";      // optional: lower bound
 const limit = params.get("limit") ?? "1";   // default to 1
 const theme = params.get("theme") ?? "";   // default to ""
+const id = params.get("id")
 
-const query = `lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
+const query = id != null ? `id=${id}`:`lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`;
 console.log(theme)
 
 let chess: any;
@@ -20,6 +21,7 @@ let ground: ReturnType<typeof Chessground>;
 let playerColor: 'white' | 'black';
 let activePuzzle = false;
 let puzzleURL: string = ""
+let humanMove = false
 
 chess = new Chess()
 function clearGround() {
@@ -45,10 +47,7 @@ ground = Chessground(document.getElementById('board')!, {
   },
   premovable: {
     enabled: false
-  }/*,
-  sprite: {
-    url: `assets/images/pieces/merida/${piece}.svg`
-  }*/
+  }
  });
  
   ground.set({
@@ -56,6 +55,32 @@ ground = Chessground(document.getElementById('board')!, {
   })
 }
 clearGround()
+
+const moveAbleSetting = {
+	moveable:{
+      color: playerColor,
+      dests: computeDests(),
+      free: false
+    }}
+
+function parseUCIMove(uci: string) {
+  return {
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    promotion: uci.length === 5 ? uci[4] : undefined
+  };
+}
+
+function makeMove(uci: string, isHuman: boolean) {
+  const { from, to, promotion } = parseUCIMove(uci);
+  const move = chess.move({ from, to, promotion });
+  ground.move(from, to);
+  updateBoard()
+  
+  humanMove = !isHuman
+  return move
+}
+
 
 
 function computeDests(): Map<Key, Key[]> {
@@ -96,21 +121,21 @@ function loadPuzzle() {
 
       // Apply the opponent's move after a short delay (optional)
       const opponentMove = moveQueue.shift()!;
-      startPuzzle(opponentMove)
+      startPuzzle(puzzle.fen, opponentMove)
     });
 }
 
-function startPuzzle(initMove: string) {
+function startPuzzle(initFen:string, initMove: string) {
 	clearGround()
+	
+	playerColor = initFen.split(" ")[1] === "w" ? "black" : "white";
   ground.set({
-    fen: chess.fen(),
+    fen: initFen,
     viewOnly: false,
-    orientation: chess.turn() ==="w"?"black":"white",
-    turnColor: 'white'
+    orientation: playerColor
   });
 setTimeout(()=>{
-	  chess.move(initMove);
-	  ground.move(initMove.slice(0, 2), initMove.slice(2))
+	  makeMove(initMove)
 
 
   playerColor = toColor();
@@ -119,15 +144,11 @@ setTimeout(()=>{
     viewOnly: false,
     orientation: playerColor,
     turnColor: playerColor,
-    movable: {
-      color: playerColor,
-      dests: computeDests(),
-      free: false
-    },
+    movable: moveAbleSetting,
     events: {
       move(from, to) {
-        
         handlePuzzle(from, to);
+
       }
     }
   });
@@ -137,81 +158,76 @@ setTimeout(()=>{
   },1000)
 }
 
-/*
-function handlePuzzle(from, to){
-	if (!activePuzzle) return;
-	
-      const move = chess.move({ from, to, promotion: 'q' });
-      if (!move) return showStatus("❌ Illegal move");
-
-      const expected = moveQueue[0];
-      const userMove = move.from + move.to;
-      if (userMove !== expected && move.san !== expected && !chess.isGameOver()) {
-        chess.undo();
-        handleIncorrect();
-        updateBoard()
-        return showStatus("❌ Wrong move");
-      }
-
-      showStatus("✅ Correct move! Go on!");
-      updateBoard()
-      moveQueue.shift();
-
-      if (chess.isGameOver() || moveQueue.length === 0) {
-        showStatus("✅ Puzzle complete!");
-        activePuzzle = false
-        handleCompleted()
-       
-        
-        
-      } else {
-        chess.move(moveQueue.shift());
-      }
-
-      updateBoard();
- }*/
  
  function handlePuzzle(from, to) {
-  if (!activePuzzle) return;
+  if (!humanMove || !activePuzzle) return;
+  
+  ground.set({
+	  events:{
+		  move(from, to) {
+        return
+
+      }
+      }
+      })
+  
+  console.log(moveQueue)
 
   const expected = moveQueue[0];
   const promotion = expected.length === 5 ? expected[4] : undefined;
 
-  const move = chess.move({ from, to, promotion });
-  if (!move) return showStatus("❌ Illegal move");
-
-  const userMove = move.from + move.to + (move.promotion ?? '');
-  if (userMove !== expected && move.san !== expected && !chess.isGameOver()) {
-    chess.undo();
+  const userMove = from + to + (promotion ?? '');
+  console.log(1)
+  
+  humanMove=false
+  chess.move({from,to,promotion})
+  humanMove = true
+  
+  
+  if (userMove !== expected && !chess.isGameOver()) {
     handleIncorrect();
     updateBoard();
     return showStatus("❌ Wrong move");
   }
-
+  
+  
+  
+  console.log(2)
+  chess.undo()
   showStatus("✅ Correct move! Go on!");
+  humanMove = false; // Prevent interaction during auto processing
+    console.log(3)
+
+  makeMove(moveQueue.shift())
   updateBoard();
-  moveQueue.shift();
 
   if (chess.isGameOver() || moveQueue.length === 0) {
     showStatus("✅ Puzzle complete!");
     activePuzzle = false;
     handleCompleted();
-  } else {
-    const opponentMoveStr = moveQueue.shift();
-    const oppFrom = opponentMoveStr.slice(0, 2);
-    const oppTo = opponentMoveStr.slice(2, 4);
-    const oppPromotion = opponentMoveStr.length === 5 ? opponentMoveStr[4] : undefined;
-
-    chess.move({ from: oppFrom, to: oppTo, promotion: oppPromotion });
-    //ground.move(oppFrom, oppTo);
-    updateBoard()
+    return;
   }
 
+  console.log(4)
+
+  makeMove(moveQueue.shift()!);//opponent move
+  console.log(5)
   updateBoard();
+
+  ground.set({events: {
+      move(from, to) {
+        
+        handlePuzzle(from, to);
+      }
+    }
+    })
+  humanMove = true; // Re-enable input for next human move
 }
+
 
 function handleIncorrect(){
 	console.log("incorrect")
+	chess.undo()
 	ground.set({
 		fen:chess.fen(),
 		orientation: playerColor,
