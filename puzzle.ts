@@ -4,14 +4,17 @@ import { Chessground } from 'chessground'
 import { Config } from 'chessground/config'
 
 const params = new URLSearchParams(window.location.search)
-const lt = params.get('lt') ?? '4000'
-const gt = params.get('gt') ?? '1000'
+const max = params.get('min') ?? '4000'
+const min = params.get('min') ?? '100'
 const limit = params.get('limit') ?? '1'
+const sort = params.get('sort') ?? ''
 const theme = params.get('theme') ?? ''
+const optionalQueryString = (sort != ''?'&sort=1':'')+(theme != ''?'&theme='+theme:'')
+
 const id = params.get('id')
 const query = id != null
   ? `id=${id}`
-  : `lt=${lt}&gt=${gt}&limit=${limit}&theme=${theme}`
+  : `max=${max}&min=${min}&limit=${limit}${optionalQueryString}`
 
 let chess = new Chess()
 let moveQueue: string[] = []
@@ -19,6 +22,8 @@ let ground: ReturnType<typeof Chessground>
 let playerColor: 'white' | 'black'
 let activePuzzle = false
 let puzzleURL = ''
+let puzzleQueue: any[] = []
+let initialPuzzleCount = 0
 
 // 1) Initialize Chessground once
 function initGround() {
@@ -38,12 +43,13 @@ function initGround() {
 }
 initGround()
 
-// 2) Compute legal destinations
+// 2) Compute legal destinations. Includes even pawn moves like a7a8, that 
 function computeDests() {
   const dests = new Map<Key, Key[]>()
   SQUARES.forEach((s) => {
     const moves = chess.moves({ square: s, verbose: true })
-    if (moves.length) dests.set(s, moves.map((m) => m.to))
+    const uniqueTos = [...new Set(moves.map((m) => m.to))]
+    if (uniqueTos.length) dests.set(s, uniqueTos)
   })
   return dests
 }
@@ -60,14 +66,53 @@ function updateGround(options: Partial<Config> = {}) {
   })
 }
 
+// Status display
+function showStatus(msg: string) {
+  document.getElementById('status')!.textContent = msg
+}
+//promo = one char
+function promoteAble(promo:string, from,to){
+  if(promo) return promo
+
+  const piece = chess.get(from)
+  if (piece?.type === 'p') {
+    const targetRank = parseInt(to[1], 10)
+    const isPromotionRank = (piece.color === 'w' && targetRank === 8) || 
+                            (piece.color === 'b' && targetRank === 1)
+
+    if (isPromotionRank) {
+      return 'q'
+    }
+  }
+  return ""
+
+  
+}
 // 4) Parse UCI moves
 function parseUCIMove(uci: string) {
-  return { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }
+  const from = uci.slice(0, 2)
+  const to = uci.slice(2, 4)
+  let promotion = promoteAble(uci[4], from,to)
+  console.log(promotion)
+/*
+  const piece = chess.get(from)
+  if (piece?.type === 'p') {
+    const targetRank = parseInt(to[1], 10)
+    const isPromotionRank = (piece.color === 'w' && targetRank === 8) || 
+                            (piece.color === 'b' && targetRank === 1)
+
+    if (isPromotionRank && !promotion) {
+      promotion = 'q'
+    }
+  }*/
+
+  return { from, to, promotion }
 }
 
 // 5) Execute moves on chess.js and Chessground
 function makeMove(uci: string, quiet = false) {
   const { from, to, promotion } = parseUCIMove(uci)
+  console.log(parseUCIMove(uci))
   chess.move({ from, to, promotion })
   if (!quiet) ground.move(from, to)
   updateGround()
@@ -77,23 +122,43 @@ function makeMove(uci: string, quiet = false) {
 function loadPuzzle() {
   fetch(`http://localhost:5000/api/puzzles?${query}`)
     .then((r) => r.json())
-    .then(([p]) => {
-      activePuzzle = true
-      puzzleURL = 'https://lichess.org/training/' + p.id
-      chess = new Chess(p.fen)
-      moveQueue = p.moves.split(' ')
-      startPuzzle(p.fen, moveQueue.shift()!)
+    .then((puzzles) => {
+      if (!puzzles.length) {
+        showStatus('No puzzles found!')
+        return
+      }
+
+      puzzleQueue = puzzles
+      initialPuzzleCount = puzzles.length
+      showStatus(`${initialPuzzleCount} puzzles loaded.`)
+      loadNextPuzzle()
     })
+}
+
+function loadNextPuzzle() {
+  if (!puzzleQueue.length) {
+    showStatus('All puzzles solved! 🎉')
+    return
+  }
+
+  const p = puzzleQueue.shift()
+  console.log(p)
+  activePuzzle = true
+  puzzleURL = 'https://lichess.org/training/' + p.id
+  chess = new Chess(p.fen)
+  moveQueue = p.moves.split(' ')
+  startPuzzle(p.fen, moveQueue.shift()!)
+  showStatus(`Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`)
 }
 
 // 7) Begin puzzle sequence
 function startPuzzle(initFen: string, oppUci: string) {
   chess.load(initFen)
   playerColor = initFen.split(' ')[1] === 'w' ? 'black' : 'white'
-  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false })
+  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:()=>null}})
 
   setTimeout(() => {
-    makeMove(oppUci, true)
+    makeMove(oppUci, false)
     playerColor = chess.turn() === 'w' ? 'white' : 'black'
     updateGround({ events: { move: onUserMove } })
     showStatus(`${playerColor} to move`)
@@ -104,13 +169,16 @@ function startPuzzle(initFen: string, oppUci: string) {
 function onUserMove(from: string, to: string) {
   if (!activePuzzle) return false
   const expected = moveQueue[0]!
-  const uci = from + to + (expected[4] || '')
-  chess.move({ from, to, promotion: expected[4] })
+  const uci = from + to + (promoteAble("",from,to))
+  chess.move({ from, to, promotion: promoteAble("",from,to) })
 
   if (uci !== expected && !chess.isGameOver()) {
-    chess.undo()
     showStatus('❌ Wrong move')
-    updateGround()
+    setTimeout(()=>{
+      chess.undo()
+      updateGround()
+    },500)
+    
     return false
   }
 
@@ -120,7 +188,12 @@ function onUserMove(from: string, to: string) {
 
   if (!moveQueue.length || chess.isGameOver()) {
     activePuzzle = false
-    showStatus(puzzleURL)
+    showStatus(`✅ Puzzle complete! Difficulty: ${puzzleURL}`)
+    
+    setTimeout(() => {
+      loadNextPuzzle()
+    }, 1000)
+  
     return false
   }
 
@@ -134,10 +207,7 @@ function onUserMove(from: string, to: string) {
   return true
 }
 
-// Status display
-function showStatus(msg: string) {
-  document.getElementById('status')!.textContent = msg
-}
+
 
 document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
 document.getElementById('board')!.classList.add('merida')

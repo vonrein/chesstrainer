@@ -18,31 +18,46 @@ def get_db():
 
 @app.route('/api/puzzles')
 def get_puzzles():
-    rating_lt = request.args.get('lt', type=int)
-    rating_gt = request.args.get('gt', type=int)
+    rating_max = request.args.get('max', type=int)
+    rating_min = request.args.get('min', type=int)
     theme = request.args.get('theme')
-    limit = request.args.get('limit', 10, type=int)
+
+    limit = request.args.get('limit', 1, type=int)
+    limit = min(limit, 100)
+
     puzzleid = request.args.get("id")
+    sort = request.args.get('sort')  # e.g. 'asc'
 
     db = get_db()
-    query = 'SELECT id, fen, moves, rating, themes FROM puzzles WHERE 1=1'
+    base_query = 'SELECT id, fen, moves, rating, themes FROM puzzles WHERE 1=1'
     params = []
 
     if puzzleid:
-        query += " AND id = ?"
+        base_query += " AND id = ?"
         params.append(puzzleid)
-
-    if rating_lt:
-        query += ' AND rating < ?'
-        params.append(rating_lt)
-    if rating_gt:
-        query += ' AND rating > ?'
-        params.append(rating_gt)
+    if rating_max:
+        base_query += ' AND rating <= ?'
+        params.append(rating_max)
+    if rating_min:
+        base_query += ' AND rating >= ?'
+        params.append(rating_min)
     if theme:
-        query += ' AND themes LIKE ?'
+        base_query += ' AND themes LIKE ?'
         params.append(f'%{theme}%')
 
-    query += ' ORDER BY RANDOM() LIMIT ?'
+    if sort:
+        # Random sample first, then sort by rating
+        query = f'''
+            SELECT * FROM (
+                {base_query} ORDER BY RANDOM() LIMIT ?
+            ) ORDER BY rating ASC
+        '''
+    else:
+        # Default random sort
+        query = f'''
+            {base_query} ORDER BY RANDOM() LIMIT ?
+        '''
+
     params.append(limit)
 
     cursor = db.execute(query, params)
