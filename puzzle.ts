@@ -1,10 +1,10 @@
 import { Chess } from 'chess.js'
-import { SQUARES, Key } from 'chess.js'
-import { Chessground, Config } from 'chessground'
+import { SQUARES } from 'chess.js'
+import { Chessground } from 'chessground'
+import { Config } from 'chessground/config'
 
-// URL query setup
 const params = new URLSearchParams(window.location.search)
-const lt = params.get('lt') ?? '1600'
+const lt = params.get('lt') ?? '4000'
 const gt = params.get('gt') ?? '1000'
 const limit = params.get('limit') ?? '1'
 const theme = params.get('theme') ?? ''

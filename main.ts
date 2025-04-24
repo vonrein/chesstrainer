@@ -1,7 +1,9 @@
-// Refactored Coordinate Trainer with Mode Abstraction
+// Refactored Coordinate Trainer with UI Generalization
 
-import { Chessground, type Config as CgConfig } from 'chessground';
+import { Chessground} from 'chessground';
+import { Config as CgConfig} from 'chessground/config'
 import type { Key } from 'chessground/types';
+import type { UiHandles } from './uiHandles';
 
 const container = document.getElementById('board')!;
 const scoreDisplay = document.getElementById('scoreDisplay')!;
@@ -16,8 +18,6 @@ const boardWrapper = document.getElementById('board-wrapper')!;
 
 const files = 'abcdefgh';
 const ranks = '12345678';
-type Files = typeof files[number];
-type Ranks = typeof ranks[number];
 
 let orientation: 'white' | 'black' = 'white';
 let zoomLevel = 1.0;
@@ -32,35 +32,53 @@ function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function applyZoom() {
-  boardWrapper.style.transform = `scale(${zoomLevel})`;
-  boardWrapper.style.transformOrigin = 'top center';
-}
+const ui: UiHandles = {
+  container,
+  boardWrapper,
+  scoreDisplay,
+  timeDisplay,
+  rateDisplay,
+  updateDisplays: (score, elapsedMs) => {
+    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+    const rate = elapsedSeconds > 0 ? (score / (elapsedSeconds / 30)).toFixed(2) : '0';
+    scoreDisplay.textContent = `Score: ${score}`;
+    timeDisplay.textContent = `Time: ${elapsedSeconds}s`;
+    rateDisplay.textContent = `Points per half minute: ${rate}`;
+  },
+  updateOverlay: (current, next) => {
+    coordsOverlay.innerHTML = `
+      <svg viewBox="0 0 100 100" class="coords-svg">
+        <g class="current">
+          <text x="25" y="20">${current}</text>
+        </g>
+        <g class="next">
+          <text x="25" y="25">${next}</text>
+        </g>
+      </svg>`;
+  },
+  zoom: delta => {
+    zoomLevel = Math.min(Math.max(zoomLevel + delta, 0.5), 2.0);
+    boardWrapper.style.transform = `scale(${zoomLevel})`;
+    boardWrapper.style.transformOrigin = 'top center';
+  },
+};
 
-zoomInBtn.addEventListener('click', () => {
-  zoomLevel = Math.min(zoomLevel + 0.1, 2.0);
-  applyZoom();
-});
-
-zoomOutBtn.addEventListener('click', () => {
-  zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
-  applyZoom();
-});
+zoomInBtn.addEventListener('click', () => ui.zoom(0.1));
+zoomOutBtn.addEventListener('click', () => ui.zoom(-0.1));
 
 // --- Game Mode Types & System ---
 type GameMode = 'coordinates' | 'speed';
 
 interface GameModeConfig {
   name: GameMode;
-  init(): void;
-  handleClick(key: Key): void;
-  reset(): void;
-  renderOverlay(): void;
+  init(ui: UiHandles): void;
+  handleClick(key: Key, ui: UiHandles): void;
+  reset(ui: UiHandles): void;
+  renderOverlay(ui: UiHandles): void;
   getScore(): number;
 }
 
-// Shared state
-let ground = Chessground(container, {
+const config : CgConfig= {
   orientation,
   fen: '8/8/8/8/8/8/8/8',
   coordinates: true,
@@ -71,22 +89,14 @@ let ground = Chessground(container, {
   selectable: { enabled: false },
   drawable: { enabled: false },
   events: {
-    select: key => currentMode.handleClick(key),
+    select: key => currentMode.handleClick(key, ui),
   },
-});
-
-function updateDisplays(score: number) {
-  const elapsedMs = Date.now() - startTime;
-  const elapsedSeconds = Math.floor(elapsedMs / 1000);
-  const rate = elapsedSeconds > 0 ? (score / (elapsedSeconds / 30)).toFixed(2) : '0';
-
-  scoreDisplay.textContent = `Score: ${score}`;
-  timeDisplay.textContent = `Time: ${elapsedSeconds}s`;
-  rateDisplay.textContent = `Points per half minute: ${rate}`;
 }
 
+let ground = Chessground(container, );
+
 function startTimer() {
-  timerInterval = window.setInterval(() => updateDisplays(currentMode.getScore()), 1000);
+  timerInterval = window.setInterval(() => ui.updateDisplays(currentMode.getScore(), Date.now() - startTime), 1000);
 }
 
 // --- Coordinates Mode ---
@@ -103,38 +113,30 @@ function randomSquare(exclude?: Key): Key {
 
 const coordinatesMode: GameModeConfig = {
   name: 'coordinates',
-  init() {
+  init(ui) {
     coordScore = 0;
     coordCurrent = randomSquare();
     coordNext = randomSquare(coordCurrent);
-    updateDisplays(coordScore);
-    this.renderOverlay();
+    ui.updateDisplays(coordScore, 0);
+    ui.updateOverlay(coordCurrent, coordNext);
   },
-  handleClick(key: Key) {
+  handleClick(key, ui) {
     if (key === coordCurrent) {
       coordScore++;
-      updateDisplays(coordScore);
+      ui.updateDisplays(coordScore, Date.now() - startTime);
       coordCurrent = coordNext;
       coordNext = randomSquare(coordCurrent);
-      this.renderOverlay();
+      ui.updateOverlay(coordCurrent, coordNext);
     } else {
       console.log('❌ Wrong!', key);
     }
   },
-  reset() {
+  reset(ui) {
     startTime = Date.now();
-    this.init();
+    this.init(ui);
   },
-  renderOverlay() {
-    coordsOverlay.innerHTML = `
-      <svg viewBox="0 0 100 100" class="coords-svg">
-        <g class="current">
-          <text x="25" y="20">${coordCurrent}</text>
-        </g>
-        <g class="next">
-          <text x="25" y="25">${coordNext}</text>
-        </g>
-      </svg>`;
+  renderOverlay(ui) {
+    ui.updateOverlay(coordCurrent, coordNext);
   },
   getScore() {
     return coordScore;
@@ -148,7 +150,7 @@ let speedScore = 0;
 
 const speedMode: GameModeConfig = {
   name: 'speed',
-  init() {
+  init(ui) {
     speedList = [];
     for (const f of files) for (const r of ranks) speedList.push((f + r) as Key);
     for (let i = speedList.length - 1; i > 0; i--) {
@@ -157,36 +159,28 @@ const speedMode: GameModeConfig = {
     }
     speedScore = 0;
     speedCurrent = speedList.shift()!;
-    updateDisplays(speedScore);
-    this.renderOverlay();
+    ui.updateDisplays(speedScore, 0);
+    ui.updateOverlay(speedCurrent, speedList[0] ?? '');
   },
-  handleClick(key: Key) {
+  handleClick(key, ui) {
     if (key === speedCurrent) {
       speedScore++;
-      updateDisplays(speedScore);
+      ui.updateDisplays(speedScore, Date.now() - startTime);
       if (speedList.length === 0) {
         alert(`✅ Done! Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
-        this.reset();
+        this.reset(ui);
         return;
       }
       speedCurrent = speedList.shift()!;
-      this.renderOverlay();
+      ui.updateOverlay(speedCurrent, speedList[0] ?? '');
     }
   },
-  reset() {
+  reset(ui) {
     startTime = Date.now();
-    this.init();
+    this.init(ui);
   },
-  renderOverlay() {
-    coordsOverlay.innerHTML = `
-      <svg viewBox="0 0 100 100" class="coords-svg">
-        <g class="current">
-          <text x="25" y="20">${speedCurrent}</text>
-        </g>
-        <g class="next">
-          <text x="25" y="25">${speedList[0] ?? ''}</text>
-        </g>
-      </svg>`;
+  renderOverlay(ui) {
+    ui.updateOverlay(speedCurrent, speedList[0] ?? '');
   },
   getScore() {
     return speedScore;
@@ -197,11 +191,11 @@ const speedMode: GameModeConfig = {
 const selectedMode = (getQueryParam('mode') as GameMode) || 'coordinates';
 const currentMode: GameModeConfig = selectedMode === 'speed' ? speedMode : coordinatesMode;
 
-resetBtn.addEventListener('click', () => currentMode.reset());
+resetBtn.addEventListener('click', () => currentMode.reset(ui));
 toggleOrientationBtn.addEventListener('click', () => {
   orientation = orientation === 'white' ? 'black' : 'white';
   ground.set({ orientation });
 });
 
-currentMode.init();
+currentMode.init(ui);
 startTimer();
