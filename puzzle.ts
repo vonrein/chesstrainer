@@ -70,9 +70,11 @@ function updateGround(options: Partial<Config> = {}) {
 function showStatus(msg: string) {
   document.getElementById('status')!.textContent = msg
 }
-//promo = one char
-function promoteAble(promo:string, from,to){
-  if(promo) return promo
+/*
+**promo = one char
+*/
+function promoteAble(promo: string | undefined, from: string, to: string): string | undefined {
+  if (promo) return promo
 
   const piece = chess.get(from)
   if (piece?.type === 'p') {
@@ -84,27 +86,13 @@ function promoteAble(promo:string, from,to){
       return 'q'
     }
   }
-  return ""
-
-  
+  return undefined
 }
 // 4) Parse UCI moves
 function parseUCIMove(uci: string) {
   const from = uci.slice(0, 2)
   const to = uci.slice(2, 4)
   let promotion = promoteAble(uci[4], from,to)
-  console.log(promotion)
-/*
-  const piece = chess.get(from)
-  if (piece?.type === 'p') {
-    const targetRank = parseInt(to[1], 10)
-    const isPromotionRank = (piece.color === 'w' && targetRank === 8) || 
-                            (piece.color === 'b' && targetRank === 1)
-
-    if (isPromotionRank && !promotion) {
-      promotion = 'q'
-    }
-  }*/
 
   return { from, to, promotion }
 }
@@ -112,7 +100,6 @@ function parseUCIMove(uci: string) {
 // 5) Execute moves on chess.js and Chessground
 function makeMove(uci: string, quiet = false) {
   const { from, to, promotion } = parseUCIMove(uci)
-  console.log(parseUCIMove(uci))
   chess.move({ from, to, promotion })
   if (!quiet) ground.move(from, to)
   updateGround()
@@ -142,7 +129,6 @@ function loadNextPuzzle() {
   }
 
   const p = puzzleQueue.shift()
-  console.log(p)
   activePuzzle = true
   puzzleURL = 'https://lichess.org/training/' + p.id
   chess = new Chess(p.fen)
@@ -169,8 +155,9 @@ function startPuzzle(initFen: string, oppUci: string) {
 function onUserMove(from: string, to: string) {
   if (!activePuzzle) return false
   const expected = moveQueue[0]!
-  const uci = from + to + (promoteAble("",from,to))
-  chess.move({ from, to, promotion: promoteAble("",from,to) })
+  const uci = from + to + (promoteAble(undefined, from, to) ?? '')
+  chess.move({ from, to, promotion: promoteAble(undefined, from, to) })
+
 
   if (uci !== expected && !chess.isGameOver()) {
     showStatus('❌ Wrong move')
