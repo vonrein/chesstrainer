@@ -2,6 +2,7 @@ import { Chess } from 'chess.js'
 import { SQUARES } from 'chess.js'
 import { Chessground } from 'chessground'
 import { Config } from 'chessground/config'
+import { randomTheme } from './randomTheme'
 
 const params = new URLSearchParams(window.location.search)
 const max = params.get('min') ?? '4000'
@@ -42,6 +43,7 @@ function initGround() {
   )
 }
 initGround()
+
 
 // 2) Compute legal destinations. Includes even pawn moves like a7a8, that 
 function computeDests() {
@@ -129,6 +131,7 @@ function loadNextPuzzle() {
   }
 
   const p = puzzleQueue.shift()
+  console.log(p)
   activePuzzle = true
   puzzleURL = 'https://lichess.org/training/' + p.id
   chess = new Chess(p.fen)
@@ -197,4 +200,5 @@ function onUserMove(from: string, to: string) {
 
 
 document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
-document.getElementById('board')!.classList.add('merida')
+//document.getElementById('board')!.classList.add('merida')
+randomTheme(document.getElementById('board')!)

@@ -4,6 +4,7 @@ import { Chessground} from 'chessground';
 import { Config as CgConfig} from 'chessground/config'
 import type { Key } from 'chessground/types';
 import type { UiHandles } from './uiHandles';
+import {randomTheme} from "./randomTheme"
 
 const container = document.getElementById('board')!;
 const scoreDisplay = document.getElementById('scoreDisplay')!;
@@ -93,7 +94,8 @@ const config : CgConfig= {
   },
 }
 
-let ground = Chessground(container, );
+let ground = Chessground(container, config);
+randomTheme(ground)
 
 function startTimer() {
   timerInterval = window.setInterval(() => ui.updateDisplays(currentMode.getScore(), Date.now() - startTime), 1000);
