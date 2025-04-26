@@ -5,7 +5,7 @@ import { Config } from 'chessground/config'
 import { randomTheme } from './randomTheme'
 
 const params = new URLSearchParams(window.location.search)
-const max = params.get('min') ?? '4000'
+const max = params.get('max') ?? '4000'
 const min = params.get('min') ?? '100'
 const limit = params.get('limit') ?? '1'
 const sort = params.get('sort') ?? ''
@@ -25,6 +25,7 @@ let activePuzzle = false
 let puzzleURL = ''
 let puzzleQueue: any[] = []
 let initialPuzzleCount = 0
+const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
 // 1) Initialize Chessground once
 function initGround() {
@@ -35,9 +36,11 @@ function initGround() {
       orientation: 'white',
       viewOnly: false,
       highlight: { lastMove: true, check: true },
+      check:chess.isCheck(),
       animation: { enabled: true, duration: 200 },
       draggable: { showGhost: true },
       movable: { free: false, color: 'white', dests: new Map<Key, Key[]>() },
+      premovable: {enabled:true},
       events: {}
     }
   )
@@ -61,7 +64,8 @@ function updateGround(options: Partial<Config> = {}) {
   ground.set({
     fen: chess.fen(),
     orientation: playerColor,
-    turnColor: playerColor,
+    turnColor: getTurnColor(),
+    check:chess.isCheck(),
     movable: { color: playerColor, dests: computeDests(), free: false },
     events: {},
     ...options
@@ -144,11 +148,11 @@ function loadNextPuzzle() {
 function startPuzzle(initFen: string, oppUci: string) {
   chess.load(initFen)
   playerColor = initFen.split(' ')[1] === 'w' ? 'black' : 'white'
-  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:()=>null}})
+  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:null}})
 
   setTimeout(() => {
     makeMove(oppUci, false)
-    playerColor = chess.turn() === 'w' ? 'white' : 'black'
+    playerColor = getTurnColor()
     updateGround({ events: { move: onUserMove } })
     showStatus(`${playerColor} to move`)
   }, 500)
@@ -159,7 +163,8 @@ function onUserMove(from: string, to: string) {
   if (!activePuzzle) return false
   const expected = moveQueue[0]!
   const uci = from + to + (promoteAble(undefined, from, to) ?? '')
-  chess.move({ from, to, promotion: promoteAble(undefined, from, to) })
+  //chess.move({ from, to, promotion: promoteAble(undefined, from, to) })
+  makeMove(uci,false)
 
 
   if (uci !== expected && !chess.isGameOver()) {
@@ -201,4 +206,23 @@ function onUserMove(from: string, to: string) {
 
 document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
 //document.getElementById('board')!.classList.add('merida')
-randomTheme(document.getElementById('board')!)
+
+document.head.appendChild(randomTheme(document.getElementById('board')!))
+
+let themeChanged = false
+document.addEventListener("keydown",(e)=>{
+	if(e.key == "c" && !themeChanged){
+		themeChanged = true
+		document.querySelector("#themeStyles").remove()
+		document.head.appendChild(randomTheme(document.getElementById('board')!))
+		
+		
+	}
+	
+	})
+document.addEventListener("keyup",(e)=>{
+	
+	themeChanged = false
+	
+	
+	})
