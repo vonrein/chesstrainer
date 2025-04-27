@@ -50,29 +50,34 @@ def fetch_puzzles(limit=10, rating_min=100, rating_max=4000, theme=None):
     conn.close()
     return puzzles
 
-def render_ascii(fen, use_unicode=False, use_color=True):
+def render_board(fen, use_unicode=False, use_color=True, flip=False):
     symbol_map = UNICODE_SYMBOLS if use_unicode else ASCII_SYMBOLS
     rows = fen.split(' ')[0].split('/')
-    print("+-----------------+")
+    if flip:
+        rows = rows[::-1]
+    print("+------------------+")
     for rank_index, row in enumerate(rows):
-        line = ''
+        expanded_row = []
         file_index = 0
         for ch in row:
             if ch.isdigit():
                 for _ in range(int(ch)):
-                    bg = '\033[107m' if (file_index + (8 - rank_index)) % 2 == 0 else '\033[100m'
-                    square = f"{bg}. \033[0m" if use_color else ". "
-                    line += square
+                    expanded_row.append('.')
                     file_index += 1
             else:
-                bg = '\033[107m' if (file_index + (8 - rank_index)) % 2 == 0 else '\033[100m'
-                piece = symbol_map.get(ch, '?')
-                square = f"{bg}\033[30m{piece} \033[0m" if use_color else f"{piece} "
-                line += square
+                expanded_row.append(symbol_map.get(ch, '?'))
                 file_index += 1
-        print(8 - rank_index, '|', line.strip())
+        if flip:
+            expanded_row = expanded_row[::-1]
+        line = ''
+        for file_index, piece in enumerate(expanded_row):
+            bg = '\033[107m' if (file_index + (8 - rank_index)) % 2 == 0 else '\033[100m'
+            square = f"{bg}\033[30m{piece} \033[0m" if use_color else f"{piece} "
+            line += square
+        rank_number = (8 - rank_index) if not flip else (1 + rank_index)
+        print(rank_number, '|', line.strip())
     print("+-----------------+")
-    print("    a b c d e f g h\n")
+    print("    a b c d e f g h\n" if not flip else "    h g f e d c b a\n")
 
 def render_list(fen):
     rows = fen.split(' ')[0].split('/')
@@ -139,14 +144,14 @@ def main():
         moves = puzzle['moves'].split(' ')
 
         opponent_move = moves.pop(0)
-        print(f"Opponent played: {opponent_move}\n")
 
-        render_ascii(current_fen, use_unicode=use_unicode, use_color=use_color)
+        
         if show_list:
             render_list(current_fen)
 
-        color_to_move = 'White' if current_fen.split(' ')[1] == 'w' else 'Black'
-        print(f"{color_to_move} to move.\n")
+        color_to_move = 'White' if current_fen.split(' ')[1] == 'w' else 'Black' #player color
+        render_board(current_fen, use_unicode=use_unicode, use_color=use_color, flip=color_to_move == "Black")
+        print(f"{color_to_move} to move. Opponent played: {opponent_move}\n")
 
         move_index = 0
         while move_index < len(moves):
@@ -159,7 +164,7 @@ def main():
                 print(f"▶ Skipped move: {moves[move_index]}\n")
                 move_index += 1
             elif user_move == 'show':
-                render_ascii(current_fen, use_unicode=use_unicode, use_color=use_color)
+                render_board(current_fen, use_unicode=use_unicode, use_color=use_color, flip=color_to_move == "Black")
                 if show_list:
                     render_list(current_fen)
                 continue
