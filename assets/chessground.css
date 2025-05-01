@@ -214,3 +214,11 @@ cg-board piece.fading {
 .cg-wrap coords.ranks coord {
   transform: translateY(39%);
 }
+
+#stats {
+  right: 0;
+  position: absolute;
+  display: flex;
+  flex-direction:column;
+  text-align:right;
+}

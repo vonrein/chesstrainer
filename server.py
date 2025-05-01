@@ -26,6 +26,10 @@ def random_theme():
         "board": board,
         "pieces": pieces
     })
+    
+@app.route("/index.html")
+def serve_coords():
+    return send_from_directory(PROJECT_ROOT, 'index.html')
 
 def get_db():
     conn = sqlite3.connect(DATABASE)

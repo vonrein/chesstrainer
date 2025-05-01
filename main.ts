@@ -1,9 +1,9 @@
-// Refactored Coordinate Trainer with UI Generalization
 
 import { Chessground} from 'chessground';
 import { Config as CgConfig} from 'chessground/config'
 import type { Key } from 'chessground/types';
-import type { UiHandles } from './uiHandles';
+import type { UiHandles} from './uiHandles';
+import { secondsToMinutes } from './uiHandles';
 import {randomTheme} from "./randomTheme"
 
 const container = document.getElementById('board')!;
@@ -43,7 +43,7 @@ const ui: UiHandles = {
     const elapsedSeconds = Math.floor(elapsedMs / 1000);
     const rate = elapsedSeconds > 0 ? (score / (elapsedSeconds / 30)).toFixed(2) : '0';
     scoreDisplay.textContent = `Score: ${score}`;
-    timeDisplay.textContent = `Time: ${elapsedSeconds}s`;
+    timeDisplay.textContent = `Time: ${secondsToMinutes(elapsedSeconds)}`;
     rateDisplay.textContent = `Points per half minute: ${rate}`;
   },
   updateOverlay: (current, next) => {
@@ -95,7 +95,6 @@ const config : CgConfig= {
 }
 
 let ground = Chessground(container, config);
-randomTheme(ground)
 
 function startTimer() {
   timerInterval = window.setInterval(() => ui.updateDisplays(currentMode.getScore(), Date.now() - startTime), 1000);
@@ -201,3 +200,26 @@ toggleOrientationBtn.addEventListener('click', () => {
 
 currentMode.init(ui);
 startTimer();
+
+
+
+
+document.head.appendChild(randomTheme(document.getElementById('board')!))
+
+let themeChanged = false
+document.addEventListener("keydown",(e)=>{
+	if(e.key == "c" && !themeChanged){
+		themeChanged = true
+		document.querySelector("#themeStyles").remove()
+		document.head.appendChild(randomTheme(document.getElementById('board')!))
+		
+		
+	}
+	
+	})
+document.addEventListener("keyup",(e)=>{
+	
+	themeChanged = false
+	
+	
+	})

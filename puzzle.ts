@@ -4,6 +4,7 @@ import { Chessground } from 'chessground'
 import { Config } from 'chessground/config'
 import { randomTheme } from './randomTheme'
 
+const container = document.getElementById('board')!
 const params = new URLSearchParams(window.location.search)
 const max = params.get('max') ?? '4000'
 const min = params.get('min') ?? '100'
@@ -27,10 +28,22 @@ let puzzleQueue: any[] = []
 let initialPuzzleCount = 0
 const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
+const composeGlyph = (fill: string, path: string) =>
+  `<defs><filter id="shadow"><feDropShadow dx="4" dy="7" stdDeviation="5" flood-opacity="0.5" /></filter></defs><g transform="translate(71 -12) scale(0.4)"><circle style="fill:${fill};filter:url(#shadow)" cx="50" cy="50" r="50" />${path}</g>`;
+
+const goodmoveSVG = `<path fill="#fff" d="M87 32.8q0 2-1.4 3.2L51 70.6 44.6 77q-1.7 1.3-3.4 1.3-1.8 0-3.1-1.3L14.3 53.3Q13 52 13 50q0-2 1.3-3.2l6.4-6.5Q22.4 39 24 39q1.9 0 3.2 1.3l14 14L72.7 23q1.3-1.3 3.2-1.3 1.6 0 3.3 1.3l6.4 6.5q1.3 1.4 1.3 3.4z"/>`
+const wrongMoveSVG = `    '<path fill="#fff" d="M79.4 68q0 1.8-1.4 3.2l-6.7 6.7q-1.4 1.4-3.5 1.4-1.9 0-3.3-1.4L50 63.4 35.5 78q-1.4 1.4-3.3 1.4-2 0-3.5-1.4L22 71.2q-1.4-1.4-1.4-3.3 0-1.7 1.4-3.5L36.5 50 22 35.4Q20.6 34 20.6 32q0-1.7 1.4-3.5l6.7-6.5q1.2-1.4 3.5-1.4 2 0 3.3 1.4L50 36.6 64.5 22q1.2-1.4 3.3-1.4 2.3 0 3.5 1.4l6.7 6.5q1.4 1.8 1.4 3.5 0 2-1.4 3.3L63.5 49.9 78 64.4q1.4 1.8 1.4 3.5z"/>'`
+
+const glyphToSvg: Dictionary<string> = {
+	'✓': composeGlyph('#22ac38',goodmoveSVG),
+	'✗': composeGlyph('#df5353',wrongMoveSVG)
+	
+}
+
 // 1) Initialize Chessground once
 function initGround() {
   ground = Chessground(
-    document.getElementById('board')!,
+    container,
     {
       fen: '',
       orientation: 'white',
@@ -41,11 +54,23 @@ function initGround() {
       draggable: { showGhost: true },
       movable: { free: false, color: 'white', dests: new Map<Key, Key[]>() },
       premovable: {enabled:true},
-      events: {}
+      events: {},
+      drawable: {
+    enabled: true,
+    visible: true,
+    autoShapes: [],
+    shapes: []
+  }
     }
   )
+ /* ground.setAutoShapes([
+        { orig: "e4", brush: "green", customSvg: glyphToSvg["✓"]},
+      ]);*/
+  
 }
 initGround()
+
+
 
 
 // 2) Compute legal destinations. Includes even pawn moves like a7a8, that 
@@ -105,9 +130,11 @@ function parseUCIMove(uci: string) {
 
 // 5) Execute moves on chess.js and Chessground
 function makeMove(uci: string, quiet = false) {
+  
   const { from, to, promotion } = parseUCIMove(uci)
   chess.move({ from, to, promotion })
   if (!quiet) ground.move(from, to)
+
   updateGround()
 }
 
@@ -191,9 +218,9 @@ function onUserMove(from: string, to: string) {
   
     return false
   }
-
+  updateGround({events: {move:null}})
   setTimeout(() => {
-    makeMove(moveQueue.shift()!, true)
+    makeMove(moveQueue.shift()!, false)
     playerColor = chess.turn() === 'w' ? 'white' : 'black'
     updateGround({ events: { move: onUserMove } })
     showStatus(`${playerColor} to move`)
@@ -207,7 +234,7 @@ function onUserMove(from: string, to: string) {
 document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
 //document.getElementById('board')!.classList.add('merida')
 
-document.head.appendChild(randomTheme(document.getElementById('board')!))
+document.head.appendChild(randomTheme(container))
 
 let themeChanged = false
 document.addEventListener("keydown",(e)=>{

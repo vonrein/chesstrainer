@@ -168,16 +168,18 @@ rect.current-target {
 </head>
 <body>
 
-  <!-- Wrap the board and overlay together -->
   <div id="board-wrapper">
-    <div id="board" class="blue"></div>
+    <div id="board"></div>
     <div id="coords-overlay" class="coords-overlay"></div>
+    <div id="stats">
+		<div id="scoreDisplay">0</div>
+		<div id="timeDisplay">01:00</div>
+		<div id="rateDisplay"> 0</div>
+    </div>
   </div>
 
   <div style="text-align: right; margin-top: 1em;">
-    <p id="scoreDisplay">Score: 0</p>
-    <p id="timeDisplay">Time: 0s</p>
-    <p id="rateDisplay">Points per half minute: 0</p>
+
     <button id="resetBtn">Reset</button>
     <button id="toggleOrientationBtn">Toggle Orientation</button>
     

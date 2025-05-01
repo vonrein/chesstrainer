@@ -9,6 +9,7 @@ dist/
 *.d.ts
 
 # Puzzle files (anywhere in the repo)
+__pycache__
 *.csv
 *.db
 *.zst
