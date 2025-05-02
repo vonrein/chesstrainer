@@ -85,6 +85,17 @@ def get_puzzles():
     db.close()
     return jsonify(puzzles)
 
+@app.route('/api/streak')
+def get_streak():
+    db = get_db()
+    streak_ids = request.args.get("ids").split(",")
+    placeholders = ', '.join('?' for _ in streak_ids)
+    query = f"SELECT * FROM puzzles WHERE id IN ({placeholders}) ORDER BY rating ASC"
+    cursor = db.execute(query, streak_ids)
+    puzzles = [dict(row) for row in cursor.fetchall()]
+    db.close()
+    return jsonify(puzzles)
+
 # Serve HTML entrypoint
 @app.route('/')
 def serve_index():

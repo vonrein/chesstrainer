@@ -14,9 +14,18 @@ const theme = params.get('theme') ?? ''
 const optionalQueryString = (sort != ''?'&sort=1':'')+(theme != ''?'&theme='+theme:'')
 
 const id = params.get('id')
+type SourceType = "storm" | "streak" | "local";
+
+const rawSource = params.get("source");
+const source: SourceType = (rawSource === "storm" || rawSource === "streak" || rawSource === "local")
+  ? rawSource
+  : "local";
+
+
 const query = id != null
   ? `id=${id}`
   : `max=${max}&min=${min}&limit=${limit}${optionalQueryString}`
+
 
 let chess = new Chess()
 let moveQueue: string[] = []
@@ -26,6 +35,7 @@ let activePuzzle = false
 let puzzleURL = ''
 let puzzleQueue: any[] = []
 let initialPuzzleCount = 0
+let mistake = false
 const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
 const composeGlyph = (fill: string, path: string) =>
@@ -98,8 +108,9 @@ function updateGround(options: Partial<Config> = {}) {
 }
 
 // Status display
-function showStatus(msg: string) {
-  document.getElementById('status')!.textContent = msg
+function showStatus(msg: string = "",pzInfo:string = "") {
+  if(msg != "") document.getElementById('status')!.textContent = msg
+  if(pzInfo !="") document.getElementById('puzzleInfo')!.textContent = pzInfo
 }
 /*
 **promo = one char
@@ -139,25 +150,60 @@ function makeMove(uci: string, quiet = false) {
 }
 
 // 6) Load puzzle data
-function loadPuzzle() {
-  fetch(`http://localhost:5000/api/puzzles?${query}`)
-    .then((r) => r.json())
-    .then((puzzles) => {
-      if (!puzzles.length) {
-        showStatus('No puzzles found!')
-        return
+async function loadPuzzles() {
+  let puzzleSourceURL: string;
+  if (source === "local") {
+    puzzleSourceURL = `http://localhost:5000/api/puzzles?${query}`;
+  } else {
+    puzzleSourceURL = `https://lichess.org/api/${source}`;
+  }
+
+  try {
+    const response = await fetch(puzzleSourceURL);
+    let data = await response.json();
+
+    let puzzles: any[] = [];
+
+    if (source === "storm") {
+      puzzles = data.puzzles.map((obj: any) => {
+        if ('line' in obj) {
+          obj.moves = obj.line;
+          delete obj.line;
+        }
+        return obj;
+      });
+    } else if (source === "streak") {
+      const ids = data.streak.split(" ");
+      if (!ids.length) {
+        showStatus("No puzzles found!");
+        return;
       }
 
-      puzzleQueue = puzzles
-      initialPuzzleCount = puzzles.length
-      showStatus(`${initialPuzzleCount} puzzles loaded.`)
-      loadNextPuzzle()
-    })
+      const streakResponse = await fetch(`http://localhost:5000/api/streak?ids=${ids.join(",")}`);
+      puzzles = await streakResponse.json();
+    } else {
+      puzzles = data;
+    }
+
+    if (!puzzles.length) {
+      showStatus("No puzzles found!");
+      return;
+    }
+
+    puzzleQueue = puzzles;
+    initialPuzzleCount = puzzles.length;
+    showStatus("", `${initialPuzzleCount} puzzles loaded.`);
+    loadNextPuzzle();
+  } catch (error) {
+    showStatus("Failed to load puzzles.");
+    console.error(error);
+  }
 }
 
 function loadNextPuzzle() {
+  mistake = false
   if (!puzzleQueue.length) {
-    showStatus('All puzzles solved! 🎉')
+    showStatus("",'All puzzles solved! 🎉')
     return
   }
 
@@ -168,20 +214,20 @@ function loadNextPuzzle() {
   chess = new Chess(p.fen)
   moveQueue = p.moves.split(' ')
   startPuzzle(p.fen, moveQueue.shift()!)
-  showStatus(`Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`)
+  showStatus("",`Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`)
 }
 
 // 7) Begin puzzle sequence
 function startPuzzle(initFen: string, oppUci: string) {
   chess.load(initFen)
   playerColor = initFen.split(' ')[1] === 'w' ? 'black' : 'white'
-  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:null}})
+  updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:()=>null}})
 
   setTimeout(() => {
     makeMove(oppUci, false)
     playerColor = getTurnColor()
     updateGround({ events: { move: onUserMove } })
-    showStatus(`${playerColor} to move`)
+    //showStatus(`${playerColor} to move`)
   }, 500)
 }
 
@@ -196,6 +242,7 @@ function onUserMove(from: string, to: string) {
 
   if (uci !== expected && !chess.isGameOver()) {
     showStatus('❌ Wrong move')
+    mistake = true
     setTimeout(()=>{
       chess.undo()
       updateGround()
@@ -210,7 +257,7 @@ function onUserMove(from: string, to: string) {
 
   if (!moveQueue.length || chess.isGameOver()) {
     activePuzzle = false
-    showStatus(`✅ Puzzle complete! Difficulty: ${puzzleURL}`)
+    showStatus(`✅ Puzzle complete! URL: <a href="${puzzleURL}">${mistake?"❌":"✅"}</a>`)
     
     setTimeout(() => {
       loadNextPuzzle()
@@ -218,12 +265,11 @@ function onUserMove(from: string, to: string) {
   
     return false
   }
-  updateGround({events: {move:null}})
+  updateGround({events: {move:()=>null}})
   setTimeout(() => {
     makeMove(moveQueue.shift()!, false)
     playerColor = chess.turn() === 'w' ? 'white' : 'black'
     updateGround({ events: { move: onUserMove } })
-    showStatus(`${playerColor} to move`)
   }, 500)
 
   return true
@@ -231,7 +277,9 @@ function onUserMove(from: string, to: string) {
 
 
 
-document.getElementById('loadPuzzleBtn')!.addEventListener('click', loadPuzzle)
+document.getElementById('loadPuzzleBtn')!.addEventListener('click', async () => {
+  await loadPuzzles();
+})
 //document.getElementById('board')!.classList.add('merida')
 
 document.head.appendChild(randomTheme(container))
@@ -240,7 +288,7 @@ let themeChanged = false
 document.addEventListener("keydown",(e)=>{
 	if(e.key == "c" && !themeChanged){
 		themeChanged = true
-		document.querySelector("#themeStyles").remove()
+		document.querySelector("#themeStyles")!.remove()
 		document.head.appendChild(randomTheme(document.getElementById('board')!))
 		
 		

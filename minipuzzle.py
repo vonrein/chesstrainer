@@ -18,6 +18,9 @@ UNICODE_SYMBOLS = {
     'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
 }
 
+# Global setting to track unicode usage
+use_unicode_global = False
+
 def connect_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -79,23 +82,39 @@ def render_board(fen, use_unicode=False, use_color=True, flip=False):
     print("+-----------------+")
     print("    a b c d e f g h\n" if not flip else "    h g f e d c b a\n")
 
+def parse_fen_pieces(fen):
+    fen_part = fen.split(' ')[0]
+    positions = {}
+
+    rank = 8
+    file = 0
+
+    for char in fen_part:
+        if char == '/':
+            rank -= 1
+            file = 0
+        elif char.isdigit():
+            file += int(char)
+        else:
+            square = chr(97 + file) + str(rank)
+            positions[square] = char
+            file += 1
+
+    return positions
+
 def render_list(fen):
-    rows = fen.split(' ')[0].split('/')
-    piece_list = []
-    files = 'abcdefgh'
-    for r, row in enumerate(rows):
-        file_index = 0
-        for ch in row:
-            if ch.isdigit():
-                file_index += int(ch)
-            else:
-                color = 'w' if ch.isupper() else 'b'
-                piece = ch.upper()
-                square = files[file_index] + str(8 - r)
-                piece_list.append(f"{color}{piece} on {square}")
-                file_index += 1
-    for entry in piece_list:
-        print(entry)
+    symbol_map = UNICODE_SYMBOLS if use_unicode_global else ASCII_SYMBOLS
+    pieces = parse_fen_pieces(fen)
+    line = ''
+    count = 0
+    for square in sorted(pieces.keys(), key=lambda x: (8 - int(x[1]), x[0])):
+        piece = pieces[square]
+        display_piece = symbol_map.get(piece, piece)
+        line += f"  {square}: {display_piece},"
+        count += 1
+        if count % 8 == 0:
+            line += '\n'
+    print(line.strip())
     print()
 
 def ask_yes_no(prompt, default_yes=True):
@@ -112,6 +131,7 @@ def ask_int(prompt):
             print("Invalid input. Please enter a number.")
 
 def main():
+    global use_unicode_global
     parser = argparse.ArgumentParser(description="Console Chess Puzzle Trainer")
     parser.add_argument('minrating', type=int, help='Minimum rating')
     parser.add_argument('maxrating', type=int, help='Maximum rating')
@@ -120,7 +140,7 @@ def main():
 
     print("Welcome to the Console Chess Puzzle Trainer!")
     unicode_choice = input("Use unicode pieces? [Y/n]: ").strip().lower()
-    use_unicode = (unicode_choice == '' or unicode_choice.startswith('y'))
+    use_unicode_global = (unicode_choice == '' or unicode_choice.startswith('y'))
 
     use_color = ask_yes_no("Use color display?", default_yes=True)
     show_list = ask_yes_no("Also show piece list?", default_yes=True)
@@ -145,12 +165,11 @@ def main():
 
         opponent_move = moves.pop(0)
 
-        
         if show_list:
             render_list(current_fen)
 
-        color_to_move = 'White' if current_fen.split(' ')[1] == 'w' else 'Black' #player color
-        render_board(current_fen, use_unicode=use_unicode, use_color=use_color, flip=color_to_move == "Black")
+        color_to_move = 'White' if current_fen.split(' ')[1] == 'w' else 'Black'
+        render_board(current_fen, use_unicode=use_unicode_global, use_color=use_color, flip=color_to_move == "Black")
         print(f"{color_to_move} to move. Opponent played: {opponent_move}\n")
 
         move_index = 0
@@ -164,7 +183,7 @@ def main():
                 print(f"▶ Skipped move: {moves[move_index]}\n")
                 move_index += 1
             elif user_move == 'show':
-                render_board(current_fen, use_unicode=use_unicode, use_color=use_color, flip=color_to_move == "Black")
+                render_board(current_fen, use_unicode=use_unicode_global, use_color=use_color, flip=color_to_move == "Black")
                 if show_list:
                     render_list(current_fen)
                 continue
