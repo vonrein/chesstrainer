@@ -151,38 +151,38 @@ function makeMove(uci: string, quiet = false) {
 
 // 6) Load puzzle data
 async function loadPuzzles() {
-  let puzzleSourceURL: string;
-  if (source === "local") {
-    puzzleSourceURL = `http://localhost:5000/api/puzzles?${query}`;
-  } else {
-    puzzleSourceURL = `https://lichess.org/api/${source}`;
-  }
+  let puzzleSourceURL: string =
+    source === "local"
+      ? `http://localhost:5000/api/puzzles?${query}`
+      : `https://lichess.org/api/${source}`;
 
   try {
     const response = await fetch(puzzleSourceURL);
-    let data = await response.json();
-
+    const data = await response.json();
     let puzzles: any[] = [];
+    let initialPuzzleCount: number;
 
     if (source === "storm") {
-      puzzles = data.puzzles.map((obj: any) => {
-        if ('line' in obj) {
-          obj.moves = obj.line;
-          delete obj.line;
-        }
-        return obj;
-      });
+      puzzles = data.puzzles.map((obj: any) => ({
+        ...obj,
+        moves: obj.line,
+      }));
+      initialPuzzleCount = puzzles.length;
     } else if (source === "streak") {
-      const ids = data.streak.split(" ");
-      if (!ids.length) {
+      const streakIds = data.streak.split(" ");
+      if (!streakIds.length) {
         showStatus("No puzzles found!");
         return;
       }
 
-      const streakResponse = await fetch(`http://localhost:5000/api/streak?ids=${ids.join(",")}`);
+      const streakResponse = await fetch(
+        `http://localhost:5000/api/streak?ids=${streakIds.join(",")}`
+      );
       puzzles = await streakResponse.json();
+      initialPuzzleCount = streakIds.length;
     } else {
       puzzles = data;
+      initialPuzzleCount = puzzles.length;
     }
 
     if (!puzzles.length) {
@@ -191,14 +191,14 @@ async function loadPuzzles() {
     }
 
     puzzleQueue = puzzles;
-    initialPuzzleCount = puzzles.length;
     showStatus("", `${initialPuzzleCount} puzzles loaded.`);
     loadNextPuzzle();
   } catch (error) {
-    showStatus("Failed to load puzzles.");
-    console.error(error);
+    console.error("Error loading puzzles:", error);
+    showStatus("Error loading puzzles!");
   }
 }
+
 
 function loadNextPuzzle() {
   mistake = false
