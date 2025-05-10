@@ -36,7 +36,6 @@ let puzzleURL = ''
 let puzzleQueue: any[] = []
 let initialPuzzleCount = 0
 let mistake = false
-const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
 const composeGlyph = (fill: string, path: string) =>
   `<defs><filter id="shadow"><feDropShadow dx="4" dy="7" stdDeviation="5" flood-opacity="0.5" /></filter></defs><g transform="translate(71 -12) scale(0.4)"><circle style="fill:${fill};filter:url(#shadow)" cx="50" cy="50" r="50" />${path}</g>`;
@@ -84,15 +83,17 @@ initGround()
 
 
 // 2) Compute legal destinations. Includes even pawn moves like a7a8, that 
-function computeDests() {
+export function computeDests(c = chess) {
   const dests = new Map<Key, Key[]>()
   SQUARES.forEach((s) => {
-    const moves = chess.moves({ square: s, verbose: true })
+    const moves = c.moves({ square: s, verbose: true })
     const uniqueTos = [...new Set(moves.map((m) => m.to))]
     if (uniqueTos.length) dests.set(s, uniqueTos)
   })
   return dests
 }
+
+export const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
 // 3) Central updater with default empty options
 function updateGround(options: Partial<Config> = {}) {

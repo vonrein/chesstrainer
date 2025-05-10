@@ -14,6 +14,9 @@ importers:
       chessground:
         specifier: ^9.1.1
         version: 9.1.1
+      snabbdom:
+        specifier: ^0.7.4
+        version: 0.7.4
     devDependencies:
       esbuild:
         specifier: ^0.25.2
@@ -185,6 +188,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  snabbdom@0.7.4:
+    resolution: {integrity: sha512-nnN+7uZ2NTIiu7EPMNwSDhmrYXqwlfCP/j72RdzvDPujXyvQxOW7Jl9yuLayzxMHDNWQR7FM6Pcn4wnDpKRe6Q==}
+
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -298,5 +304,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.25.2
       '@esbuild/win32-ia32': 0.25.2
       '@esbuild/win32-x64': 0.25.2
+
+  snabbdom@0.7.4: {}
 
   typescript@5.8.3: {}
