@@ -165,7 +165,7 @@ async function loadPuzzles() {
     if (source === "storm") {
       puzzles = data.puzzles.map((obj: any) => ({
         ...obj,
-        moves: obj.line,
+        moves: obj.line
       }
       ));
       initialPuzzleCount = puzzles.length;
