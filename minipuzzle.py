@@ -131,10 +131,10 @@ def ask_int(prompt):
             print("Invalid input. Please enter a number.")
 
 def main():
-    global use_unicode_global
+    #global use_unicode_global
     parser = argparse.ArgumentParser(description="Console Chess Puzzle Trainer")
-    parser.add_argument('minrating', type=int, help='Minimum rating')
-    parser.add_argument('maxrating', type=int, help='Maximum rating')
+    parser.add_argument('minrating',nargs="?",default=1000, type=int, help='Minimum rating')
+    parser.add_argument('maxrating',nargs="?",default=3000, type=int, help='Maximum rating')
     parser.add_argument('theme', nargs='?', default=None, help='Optional theme string')
     args = parser.parse_args()
 

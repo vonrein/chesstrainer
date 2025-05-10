@@ -166,7 +166,8 @@ async function loadPuzzles() {
       puzzles = data.puzzles.map((obj: any) => ({
         ...obj,
         moves: obj.line,
-      }));
+      }
+      ));
       initialPuzzleCount = puzzles.length;
     } else if (source === "streak") {
       const streakIds = data.streak.split(" ");
