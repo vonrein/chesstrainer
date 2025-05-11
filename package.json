@@ -4,7 +4,7 @@
   "description": "Coordinates + Puzzle Trainers using Chessground",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild main.ts --bundle --outfile=dist/main.js && esbuild puzzle.ts --bundle --outfile=dist/puzzle.js && esbuild boardList.ts --bundle --format=esm --outfile=dist/boardList.js"
+    "build": "esbuild main.ts --bundle --outfile=dist/main.js && esbuild puzzle.ts --bundle --outfile=dist/puzzle.js && esbuild view.ts --bundle --format=esm --outfile=dist/view.js"
   },
   "keywords": [],
   "author": "",
