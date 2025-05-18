@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import { Chessground } from "chessground";
 import { Color } from "chessground/types";
-//import { computeDests, getTurnColor } from "./puzzle";
+import { computeDests, getTurnColor } from "./chessUtils";
 import { VNode } from "snabbdom/vnode";
 import { h } from "snabbdom";
 
@@ -14,22 +14,26 @@ type RawPuzzle = {
 export class Puzzle {
   private readonly chess: Chess;
   private readonly config: any;
+  
 
   constructor(public readonly data: RawPuzzle) {
     this.chess = new Chess(data.fen);
+    this.chess.move(this.getFirstMove())
     this.config = this.createConfig();
+
+
   }
 
   private createConfig() {
-    const color = "white"//getTurnColor(this.chess.turn());
+    //const color = getTurnColor(this.chess.turn(),true);
     return {
-      orientation: color,
-      turnColor: color,
-      fen: this.data.fen,
+      orientation: getTurnColor(this.chess.turn(),false),
+      turnColor: getTurnColor(this.chess.turn(),false),
+      fen: this.chess.fen(),
       movable: {
-        color,
+        color:getTurnColor(this.chess.turn(),false),
         free: false,
-        //dests: computeDests(this.chess),
+        dests: computeDests(this.chess),
         events: {
           after: (orig: string, dest: string) => this.handleMove(orig, dest)
         }
@@ -62,6 +66,7 @@ export class Puzzle {
   private initBoard(el: HTMLElement) {
     const cg = Chessground(el, this.config);
     this.drawInitialArrow(cg);
+    //this.chess.move(this.getFirstMove())
   }
 
   private drawInitialArrow(cg?: ReturnType<typeof Chessground>) {
@@ -84,10 +89,10 @@ export class Puzzle {
     ];
 
     const updatedConfig = {
-      turnColor: "white",//getTurnColor(this.chess.turn()),
+      turnColor: getTurnColor(this.chess.turn(),false),
       movable: {
-        color: "white"//getTurnColor(this.chess.turn()),
-        //dests: computeDests(this.chess)
+        color: getTurnColor(this.chess.turn(),false),
+        dests: computeDests(this.chess)
       },
       drawable: { shapes }
     };
@@ -99,8 +104,10 @@ export class Puzzle {
   }
 
   private getFirstMove() {
-    const [from, to] = this.data.line.split(" ");
-    return { from, to };
+    const uci:string = this.data.line.split(" ")[0];
+    const from = uci.slice(0, 2)
+    const to = uci.slice(2, 4)
+    return {from, to};
   }
 
   private getSecondMove() {
@@ -113,9 +120,9 @@ export class Puzzle {
   }
 
   private url(): string {
-    const color: Color = "white"//getTurnColor(this.chess.turn());
+    const color: Color = getTurnColor(this.chess.turn(),true);
     const ply = this.data.line.split(" ").length;
-    return `https://lichess.org/${this.data.id}/${color}#${ply}`;
+    return `https://lichess.org/training/${this.data.id}`;
   }
 
   
