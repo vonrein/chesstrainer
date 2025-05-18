@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import { Chessground } from "chessground";
 import { Color } from "chessground/types";
-import { computeDests, getTurnColor } from "./chessUtils";
+import { computeDests,getTurnColor,parseUCIMove,promoteAble } from "./chessUtils";
 import { VNode } from "snabbdom/vnode";
 import { h } from "snabbdom";
 
@@ -79,6 +79,13 @@ export class Puzzle {
     }
   }
 
+  private handleMove(orig:string,dest:string){
+    const solutions = this.getSolutions
+
+
+  }
+
+  /*
   private handleMove(orig: string, dest: string) {
     this.chess.move({ from: orig, to: dest });
 
@@ -101,7 +108,7 @@ export class Puzzle {
     this.config.turnColor = updatedConfig.turnColor;
     this.config.movable = updatedConfig.movable;
     this.config.drawable.shapes = updatedConfig.drawable.shapes;
-  }
+  }*/
 
   private getFirstMove() {
     const uci:string = this.data.line.split(" ")[0];
@@ -110,9 +117,13 @@ export class Puzzle {
     return {from, to};
   }
 
-  private getSecondMove() {
-    const [, , from, to] = this.data.line.split(" ");
-    return { from, to };
+  private getSolutions():object[] {
+    const uciList = this.data.line.split(" ").slice(1).map(u => {
+      return {"from":u.slice(0,2),
+      "to":u.slice(2)
+      }
+    });
+    return uciList;
   }
 
   private arrow(move: { from: string; to: string }, brush: string) {

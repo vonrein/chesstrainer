@@ -1,8 +1,8 @@
 import { Chess } from 'chess.js'
-import { SQUARES } from 'chess.js'
 import { Chessground } from 'chessground'
 import { Config } from 'chessground/config'
 import { randomTheme } from './randomTheme'
+import { computeDests,getTurnColor,parseUCIMove,promoteAble } from './chessUtils'
 
 const container = document.getElementById('board')!
 const params = new URLSearchParams(window.location.search)
@@ -72,38 +72,19 @@ function initGround() {
   }
     }
   )
-  /*
-  ground.setAutoShapes([
-        { orig: "e4", customSvg: glyphToSvg["✓"]},
-      ]);*/
   
 }
 initGround()
 
-
-
-
-// 2) Compute legal destinations. Includes even pawn moves like a7a8, that 
-export function computeDests(c = chess) {
-  const dests = new Map<Key, Key[]>()
-  SQUARES.forEach((s) => {
-    const moves = c.moves({ square: s, verbose: true })
-    const uniqueTos = [...new Set(moves.map((m) => m.to))]
-    if (uniqueTos.length) dests.set(s, uniqueTos)
-  })
-  return dests
-}
-
-export const getTurnColor = (char = chess.turn()) => char === "w" ? "white":"black"
 
 // 3) Central updater with default empty options
 function updateGround(options: Partial<Config> = {}) {
   ground.set({
     fen: chess.fen(),
     orientation: playerColor,
-    turnColor: getTurnColor(),
+    turnColor: getTurnColor(chess.turn()),
     check:chess.isCheck(),
-    movable: { color: playerColor, dests: computeDests(), free: false },
+    movable: { color: playerColor, dests: computeDests(chess), free: false },
     events: {},
     ...options
   })
@@ -114,40 +95,16 @@ function showStatus(msg: string = "",pzInfo:string = "") {
   if(msg != "") document.getElementById('status')!.textContent = msg
   if(pzInfo !="") document.getElementById('puzzleInfo')!.textContent = pzInfo
 }
-/*
-**promo = one char
-*/
-function promoteAble(promo: string | undefined, from: string, to: string): string | undefined {
-  if (promo) return promo
 
-  const piece = chess.get(from)
-  if (piece?.type === 'p') {
-    const targetRank = parseInt(to[1], 10)
-    const isPromotionRank = (piece.color === 'w' && targetRank === 8) || 
-                            (piece.color === 'b' && targetRank === 1)
-
-    if (isPromotionRank) {
-      return 'q'
-    }
-  }
-  return undefined
-}
 // 4) Parse UCI moves
-function parseUCIMove(uci: string) {
-  const from = uci.slice(0, 2)
-  const to = uci.slice(2, 4)
-  let promotion = promoteAble(uci[4], from,to)
 
-  return { from, to, promotion }
-}
 
 // 5) Execute moves on chess.js and Chessground
 function makeMove(uci: string, quiet = false) {
   
-  const { from, to, promotion } = parseUCIMove(uci)
-  chess.move({ from, to, promotion })
+  const { from, to, promotion } = parseUCIMove(chess,uci)
+  chess.move(parseUCIMove(chess,uci))
   if (!quiet) ground.move(from, to)
-
   updateGround()
 }
 
@@ -202,7 +159,7 @@ async function loadPuzzles() {
   }
 }
 
-
+//load next puzzle from queue
 function loadNextPuzzle() {
   mistake = false
   if (!puzzleQueue.length) {
@@ -214,7 +171,7 @@ function loadNextPuzzle() {
   console.log(p)
   activePuzzle = true
   puzzleURL = 'https://lichess.org/training/' + p.id
-  chess = new Chess(p.fen)
+  chess.load(p.fen)
   moveQueue = p.moves.split(' ')
   startPuzzle(p.fen, moveQueue.shift()!)
   showStatus("",`Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`)
@@ -228,7 +185,7 @@ function startPuzzle(initFen: string, oppUci: string) {
 
   setTimeout(() => {
     makeMove(oppUci, false)
-    playerColor = getTurnColor()
+    playerColor = getTurnColor(chess.turn())
     updateGround({ events: { move: onUserMove } })
     //showStatus(`${playerColor} to move`)
   }, 500)
@@ -238,8 +195,8 @@ function startPuzzle(initFen: string, oppUci: string) {
 function onUserMove(from: string, to: string) {
   if (!activePuzzle) return false
   const expected = moveQueue[0]!
-  const uci = from + to + (promoteAble(undefined, from, to) ?? '')
-  //chess.move({ from, to, promotion: promoteAble(undefined, from, to) })
+  const uci = from + to + (promoteAble(chess,undefined, from, to) ?? '')
+  //chess.move({ from, to, promotion: promoteAble(chess, undefined, from, to) })
   makeMove(uci,false)
 
 
