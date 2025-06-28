@@ -4314,7 +4314,7 @@
   function parseUCIMove(chess, uci) {
     const from = uci.slice(0, 2);
     const to = uci.slice(2, 4);
-    let promotion = promoteAble(chess, uci[4], from, to);
+    let promotion = uci[4];
     return { from, to, promotion };
   }
   var init_chessUtils = __esm({
@@ -4398,7 +4398,7 @@
         if (pzInfo != "") document.getElementById("puzzleInfo").textContent = pzInfo;
       }
       function makeMove(uci, quiet = false) {
-        const { from, to, promotion } = parseUCIMove(chess, uci);
+        const { from, to } = parseUCIMove(chess, uci);
         chess.move(parseUCIMove(chess, uci));
         if (!quiet) ground.move(from, to);
         updateGround();
@@ -4462,6 +4462,7 @@
         chess.load(initFen);
         playerColor = initFen.split(" ")[1] === "w" ? "black" : "white";
         updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: { move: () => null } });
+        ground.setAutoShapes([]);
         setTimeout(() => {
           makeMove(oppUci, false);
           playerColor = getTurnColor(chess.turn());
@@ -4490,7 +4491,7 @@
         updateGround({ events: {} });
         if (!moveQueue.length || chess.isGameOver()) {
           activePuzzle = false;
-          showStatus(`\u2705 Puzzle complete! URL: <a href="${puzzleURL}">${mistake ? "\u274C" : "\u2705"}</a>`);
+          showStatus(`\u2705 Puzzle complete! URL: "${puzzleURL}" ${mistake ? "\u274C" : "\u2705"}</a>`);
           setTimeout(() => {
             loadNextPuzzle();
           }, 1e3);

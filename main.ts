@@ -207,7 +207,13 @@ startTimer();
 document.head.appendChild(randomTheme(document.getElementById('board')!))
 
 let themeChanged = false
+let flipped = false
 document.addEventListener("keydown",(e)=>{
+  if(e.key == "f" &&!flipped){
+    flipped = false
+    orientation = orientation === 'white' ? 'black' : 'white';
+    ground.set({ orientation });
+  }
 	if(e.key == "c" && !themeChanged){
 		themeChanged = true
 		document.querySelector("#themeStyles").remove()
@@ -218,7 +224,7 @@ document.addEventListener("keydown",(e)=>{
 	
 	})
 document.addEventListener("keyup",(e)=>{
-	
+	flipped = false
 	themeChanged = false
 	
 	

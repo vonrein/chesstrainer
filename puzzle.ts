@@ -102,7 +102,7 @@ function showStatus(msg: string = "",pzInfo:string = "") {
 // 5) Execute moves on chess.js and Chessground
 function makeMove(uci: string, quiet = false) {
   
-  const { from, to, promotion } = parseUCIMove(chess,uci)
+  const { from, to} = parseUCIMove(chess,uci)
   chess.move(parseUCIMove(chess,uci))
   if (!quiet) ground.move(from, to)
   updateGround()
@@ -177,12 +177,12 @@ function loadNextPuzzle() {
   showStatus("",`Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`)
 }
 
-// 7) Begin puzzle sequence
+// 7) Begin puzzle to solve
 function startPuzzle(initFen: string, oppUci: string) {
   chess.load(initFen)
   playerColor = initFen.split(' ')[1] === 'w' ? 'black' : 'white'
   updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: {move:()=>null}})
-
+  ground.setAutoShapes([]);
   setTimeout(() => {
     makeMove(oppUci, false)
     playerColor = getTurnColor(chess.turn())
@@ -222,7 +222,7 @@ function onUserMove(from: string, to: string) {
 
   if (!moveQueue.length || chess.isGameOver()) {
     activePuzzle = false
-    showStatus(`✅ Puzzle complete! URL: <a href="${puzzleURL}">${mistake?"❌":"✅"}</a>`)
+    showStatus(`✅ Puzzle complete! URL: "${puzzleURL}" ${mistake?"❌":"✅"}</a>`)
     
     setTimeout(() => {
       loadNextPuzzle()

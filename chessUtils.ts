@@ -52,8 +52,8 @@ export function promoteAble(chess:Chess, promo: string | undefined, from: string
 
 export function parseUCIMove(chess:Chess,uci: string) {
   const from = uci.slice(0, 2)
-  const to = uci.slice(2, 4)
-  let promotion = promoteAble(chess,uci[4], from,to)
+  const to = uci.slice(2,4)
+  let promotion = uci[4]
 
   return { from, to, promotion }
 }
