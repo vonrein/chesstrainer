@@ -5681,12 +5681,17 @@
       var rawSource = params.get("source");
       var source = rawSource === "storm" || rawSource === "streak" || rawSource === "local" ? rawSource : "local";
       var query = id != null ? `id=${id}` : `max=${max}&min=${min}&limit=${limit}${optionalQueryString}`;
+      var jumpToPuzzleContainer = document.getElementById("jump-to-puzzle-container");
+      var jumpToPuzzleInput = document.getElementById("jump-to-puzzle");
+      var startBtn = document.getElementById("startBtn");
+      var jumpBtn = document.getElementById("jumpBtn");
       var chess = new Chess();
       var moveQueue = [];
       var ground;
       var playerColor;
       var activePuzzle = false;
       var puzzleURL = "";
+      var allPuzzles = [];
       var puzzleQueue = [];
       var mistake = false;
       var composeGlyph = (fill, path) => `<defs><filter id="shadow"><feDropShadow dx="4" dy="7" stdDeviation="5" flood-opacity="0.5" /></filter></defs><g transform="translate(71 -12) scale(0.4)"><circle style="fill:${fill};filter:url(#shadow)" cx="50" cy="50" r="50" />${path}</g>`;
@@ -5773,13 +5778,25 @@
             showStatus("No puzzles found!");
             return;
           }
-          puzzleQueue = puzzles;
+          allPuzzles = puzzles;
+          puzzleQueue = [...allPuzzles];
+          jumpToPuzzleContainer.style.display = "inline-block";
+          jumpToPuzzleInput.max = allPuzzles.length.toString();
           showStatus("", `${initialPuzzleCount} puzzles loaded.`);
           loadNextPuzzle();
         } catch (error) {
           console.error("Error loading puzzles:", error);
           showStatus("Error loading puzzles!");
         }
+      }
+      function jumpToPuzzle() {
+        const puzzleNumber = parseInt(jumpToPuzzleInput.value, 10);
+        if (isNaN(puzzleNumber) || puzzleNumber < 1 || puzzleNumber > allPuzzles.length) {
+          showStatus("Invalid puzzle number!");
+          return;
+        }
+        puzzleQueue = allPuzzles.slice(puzzleNumber - 1);
+        loadNextPuzzle();
       }
       async function loadNextPuzzle() {
         mistake = false;
@@ -5802,10 +5819,15 @@
             const rawPuzzle = await response.json();
             const puzzleChess = new Chess();
             puzzleChess.loadPgn(rawPuzzle.game.pgn);
+            const history = puzzleChess.history({ verbose: true });
+            const lastMove = history[history.length - 1];
+            puzzleChess.undo();
             p = {
               id: rawPuzzle.puzzle.id,
               rating: rawPuzzle.puzzle.rating,
               fen: puzzleChess.fen(),
+              lastMove,
+              // {from,to,promotion}
               moves: rawPuzzle.puzzle.solution.join(" "),
               themes: rawPuzzle.puzzle.themes
             };
@@ -5818,27 +5840,34 @@
         } else {
           p = nextItem;
         }
-        console.log(p);
         activePuzzle = true;
         puzzleURL = "https://lichess.org/training/" + p.id;
         chess.load(p.fen);
         moveQueue = p.moves.split(" ");
         if (isStreakPuzzle) {
-          playerColor = getTurnColor(chess.turn());
-          updateGround({ fen: p.fen, orientation: playerColor, events: { move: onUserMove } });
-          ground.setAutoShapes([]);
+          startPuzzle(p.fen, p.lastMove);
         } else {
           startPuzzle(p.fen, moveQueue.shift());
         }
         showStatus("", `Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`);
       }
-      function startPuzzle(initFen, oppUci) {
+      function startPuzzle(initFen, oppMove) {
         chess.load(initFen);
         playerColor = initFen.split(" ")[1] === "w" ? "black" : "white";
-        updateGround({ fen: initFen, orientation: playerColor, viewOnly: false, events: { move: () => null } });
+        updateGround({
+          fen: initFen,
+          orientation: playerColor,
+          viewOnly: false,
+          events: { move: () => null }
+        });
         ground.setAutoShapes([]);
         setTimeout(() => {
-          makeMove(oppUci, false);
+          if (typeof oppMove === "string") {
+            makeMove(oppMove, false);
+          } else {
+            chess.move(oppMove);
+            ground.move(oppMove.from, oppMove.to);
+          }
           playerColor = getTurnColor(chess.turn());
           updateGround({ events: { move: onUserMove } });
         }, 500);
@@ -5882,8 +5911,11 @@
         }, 500);
         return true;
       }
-      document.getElementById("loadPuzzleBtn").addEventListener("click", async () => {
+      startBtn.addEventListener("click", async () => {
         await loadPuzzles();
+      });
+      jumpBtn.addEventListener("click", () => {
+        jumpToPuzzle();
       });
       document.head.appendChild(randomTheme(container));
       var themeChanged = false;
