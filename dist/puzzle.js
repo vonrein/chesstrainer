@@ -8,7 +8,1153 @@
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
 
-  // node_modules/.pnpm/chess.js@1.2.0/node_modules/chess.js/dist/esm/chess.js
+  // node_modules/.pnpm/chess.js@1.4.0/node_modules/chess.js/dist/esm/chess.js
+  function rootNode(comment) {
+    return comment !== null ? { comment, variations: [] } : { variations: [] };
+  }
+  function node(move3, suffix, nag, comment, variations) {
+    const node2 = { move: move3, variations };
+    if (suffix) {
+      node2.suffix = suffix;
+    }
+    if (nag) {
+      node2.nag = nag;
+    }
+    if (comment !== null) {
+      node2.comment = comment;
+    }
+    return node2;
+  }
+  function lineToTree(...nodes) {
+    const [root, ...rest] = nodes;
+    let parent = root;
+    for (const child of rest) {
+      if (child !== null) {
+        parent.variations = [child, ...child.variations];
+        child.variations = [];
+        parent = child;
+      }
+    }
+    return root;
+  }
+  function pgn(headers, game) {
+    if (game.marker && game.marker.comment) {
+      let node2 = game.root;
+      while (true) {
+        const next = node2.variations[0];
+        if (!next) {
+          node2.comment = game.marker.comment;
+          break;
+        }
+        node2 = next;
+      }
+    }
+    return {
+      headers,
+      root: game.root,
+      result: (game.marker && game.marker.result) ?? void 0
+    };
+  }
+  function peg$subclass(child, parent) {
+    function C() {
+      this.constructor = child;
+    }
+    C.prototype = parent.prototype;
+    child.prototype = new C();
+  }
+  function peg$SyntaxError(message, expected, found, location) {
+    var self = Error.call(this, message);
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(self, peg$SyntaxError.prototype);
+    }
+    self.expected = expected;
+    self.found = found;
+    self.location = location;
+    self.name = "SyntaxError";
+    return self;
+  }
+  function peg$padEnd(str, targetLength, padString) {
+    padString = padString || " ";
+    if (str.length > targetLength) {
+      return str;
+    }
+    targetLength -= str.length;
+    padString += padString.repeat(targetLength);
+    return str + padString.slice(0, targetLength);
+  }
+  function peg$parse(input, options) {
+    options = options !== void 0 ? options : {};
+    var peg$FAILED = {};
+    var peg$source = options.grammarSource;
+    var peg$startRuleFunctions = { pgn: peg$parsepgn };
+    var peg$startRuleFunction = peg$parsepgn;
+    var peg$c0 = "[";
+    var peg$c1 = '"';
+    var peg$c2 = "]";
+    var peg$c3 = ".";
+    var peg$c4 = "O-O-O";
+    var peg$c5 = "O-O";
+    var peg$c6 = "0-0-0";
+    var peg$c7 = "0-0";
+    var peg$c8 = "$";
+    var peg$c9 = "{";
+    var peg$c10 = "}";
+    var peg$c11 = ";";
+    var peg$c12 = "(";
+    var peg$c13 = ")";
+    var peg$c14 = "1-0";
+    var peg$c15 = "0-1";
+    var peg$c16 = "1/2-1/2";
+    var peg$c17 = "*";
+    var peg$r0 = /^[a-zA-Z]/;
+    var peg$r1 = /^[^"]/;
+    var peg$r2 = /^[0-9]/;
+    var peg$r3 = /^[.]/;
+    var peg$r4 = /^[a-zA-Z1-8\-=]/;
+    var peg$r5 = /^[+#]/;
+    var peg$r6 = /^[!?]/;
+    var peg$r7 = /^[^}]/;
+    var peg$r8 = /^[^\r\n]/;
+    var peg$r9 = /^[ \t\r\n]/;
+    var peg$e0 = peg$otherExpectation("tag pair");
+    var peg$e1 = peg$literalExpectation("[", false);
+    var peg$e2 = peg$literalExpectation('"', false);
+    var peg$e3 = peg$literalExpectation("]", false);
+    var peg$e4 = peg$otherExpectation("tag name");
+    var peg$e5 = peg$classExpectation([["a", "z"], ["A", "Z"]], false, false);
+    var peg$e6 = peg$otherExpectation("tag value");
+    var peg$e7 = peg$classExpectation(['"'], true, false);
+    var peg$e8 = peg$otherExpectation("move number");
+    var peg$e9 = peg$classExpectation([["0", "9"]], false, false);
+    var peg$e10 = peg$literalExpectation(".", false);
+    var peg$e11 = peg$classExpectation(["."], false, false);
+    var peg$e12 = peg$otherExpectation("standard algebraic notation");
+    var peg$e13 = peg$literalExpectation("O-O-O", false);
+    var peg$e14 = peg$literalExpectation("O-O", false);
+    var peg$e15 = peg$literalExpectation("0-0-0", false);
+    var peg$e16 = peg$literalExpectation("0-0", false);
+    var peg$e17 = peg$classExpectation([["a", "z"], ["A", "Z"], ["1", "8"], "-", "="], false, false);
+    var peg$e18 = peg$classExpectation(["+", "#"], false, false);
+    var peg$e19 = peg$otherExpectation("suffix annotation");
+    var peg$e20 = peg$classExpectation(["!", "?"], false, false);
+    var peg$e21 = peg$otherExpectation("NAG");
+    var peg$e22 = peg$literalExpectation("$", false);
+    var peg$e23 = peg$otherExpectation("brace comment");
+    var peg$e24 = peg$literalExpectation("{", false);
+    var peg$e25 = peg$classExpectation(["}"], true, false);
+    var peg$e26 = peg$literalExpectation("}", false);
+    var peg$e27 = peg$otherExpectation("rest of line comment");
+    var peg$e28 = peg$literalExpectation(";", false);
+    var peg$e29 = peg$classExpectation(["\r", "\n"], true, false);
+    var peg$e30 = peg$otherExpectation("variation");
+    var peg$e31 = peg$literalExpectation("(", false);
+    var peg$e32 = peg$literalExpectation(")", false);
+    var peg$e33 = peg$otherExpectation("game termination marker");
+    var peg$e34 = peg$literalExpectation("1-0", false);
+    var peg$e35 = peg$literalExpectation("0-1", false);
+    var peg$e36 = peg$literalExpectation("1/2-1/2", false);
+    var peg$e37 = peg$literalExpectation("*", false);
+    var peg$e38 = peg$otherExpectation("whitespace");
+    var peg$e39 = peg$classExpectation([" ", "	", "\r", "\n"], false, false);
+    var peg$f0 = function(headers, game) {
+      return pgn(headers, game);
+    };
+    var peg$f1 = function(tagPairs) {
+      return Object.fromEntries(tagPairs);
+    };
+    var peg$f2 = function(tagName, tagValue) {
+      return [tagName, tagValue];
+    };
+    var peg$f3 = function(root, marker) {
+      return { root, marker };
+    };
+    var peg$f4 = function(comment, moves) {
+      return lineToTree(rootNode(comment), ...moves.flat());
+    };
+    var peg$f5 = function(san, suffix, nag, comment, variations) {
+      return node(san, suffix, nag, comment, variations);
+    };
+    var peg$f6 = function(nag) {
+      return nag;
+    };
+    var peg$f7 = function(comment) {
+      return comment.replace(/[\r\n]+/g, " ");
+    };
+    var peg$f8 = function(comment) {
+      return comment.trim();
+    };
+    var peg$f9 = function(line) {
+      return line;
+    };
+    var peg$f10 = function(result, comment) {
+      return { result, comment };
+    };
+    var peg$currPos = options.peg$currPos | 0;
+    var peg$posDetailsCache = [{ line: 1, column: 1 }];
+    var peg$maxFailPos = peg$currPos;
+    var peg$maxFailExpected = options.peg$maxFailExpected || [];
+    var peg$silentFails = options.peg$silentFails | 0;
+    var peg$result;
+    if (options.startRule) {
+      if (!(options.startRule in peg$startRuleFunctions)) {
+        throw new Error(`Can't start parsing from rule "` + options.startRule + '".');
+      }
+      peg$startRuleFunction = peg$startRuleFunctions[options.startRule];
+    }
+    function peg$literalExpectation(text, ignoreCase) {
+      return { type: "literal", text, ignoreCase };
+    }
+    function peg$classExpectation(parts, inverted, ignoreCase) {
+      return { type: "class", parts, inverted, ignoreCase };
+    }
+    function peg$endExpectation() {
+      return { type: "end" };
+    }
+    function peg$otherExpectation(description) {
+      return { type: "other", description };
+    }
+    function peg$computePosDetails(pos) {
+      var details = peg$posDetailsCache[pos];
+      var p;
+      if (details) {
+        return details;
+      } else {
+        if (pos >= peg$posDetailsCache.length) {
+          p = peg$posDetailsCache.length - 1;
+        } else {
+          p = pos;
+          while (!peg$posDetailsCache[--p]) {
+          }
+        }
+        details = peg$posDetailsCache[p];
+        details = {
+          line: details.line,
+          column: details.column
+        };
+        while (p < pos) {
+          if (input.charCodeAt(p) === 10) {
+            details.line++;
+            details.column = 1;
+          } else {
+            details.column++;
+          }
+          p++;
+        }
+        peg$posDetailsCache[pos] = details;
+        return details;
+      }
+    }
+    function peg$computeLocation(startPos, endPos, offset) {
+      var startPosDetails = peg$computePosDetails(startPos);
+      var endPosDetails = peg$computePosDetails(endPos);
+      var res = {
+        source: peg$source,
+        start: {
+          offset: startPos,
+          line: startPosDetails.line,
+          column: startPosDetails.column
+        },
+        end: {
+          offset: endPos,
+          line: endPosDetails.line,
+          column: endPosDetails.column
+        }
+      };
+      return res;
+    }
+    function peg$fail(expected) {
+      if (peg$currPos < peg$maxFailPos) {
+        return;
+      }
+      if (peg$currPos > peg$maxFailPos) {
+        peg$maxFailPos = peg$currPos;
+        peg$maxFailExpected = [];
+      }
+      peg$maxFailExpected.push(expected);
+    }
+    function peg$buildStructuredError(expected, found, location) {
+      return new peg$SyntaxError(
+        peg$SyntaxError.buildMessage(expected, found),
+        expected,
+        found,
+        location
+      );
+    }
+    function peg$parsepgn() {
+      var s0, s1, s2;
+      s0 = peg$currPos;
+      s1 = peg$parsetagPairSection();
+      s2 = peg$parsemoveTextSection();
+      s0 = peg$f0(s1, s2);
+      return s0;
+    }
+    function peg$parsetagPairSection() {
+      var s0, s1, s2;
+      s0 = peg$currPos;
+      s1 = [];
+      s2 = peg$parsetagPair();
+      while (s2 !== peg$FAILED) {
+        s1.push(s2);
+        s2 = peg$parsetagPair();
+      }
+      s2 = peg$parse_();
+      s0 = peg$f1(s1);
+      return s0;
+    }
+    function peg$parsetagPair() {
+      var s0, s2, s4, s6, s7, s8, s10;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      peg$parse_();
+      if (input.charCodeAt(peg$currPos) === 91) {
+        s2 = peg$c0;
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e1);
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        peg$parse_();
+        s4 = peg$parsetagName();
+        if (s4 !== peg$FAILED) {
+          peg$parse_();
+          if (input.charCodeAt(peg$currPos) === 34) {
+            s6 = peg$c1;
+            peg$currPos++;
+          } else {
+            s6 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e2);
+            }
+          }
+          if (s6 !== peg$FAILED) {
+            s7 = peg$parsetagValue();
+            if (input.charCodeAt(peg$currPos) === 34) {
+              s8 = peg$c1;
+              peg$currPos++;
+            } else {
+              s8 = peg$FAILED;
+              if (peg$silentFails === 0) {
+                peg$fail(peg$e2);
+              }
+            }
+            if (s8 !== peg$FAILED) {
+              peg$parse_();
+              if (input.charCodeAt(peg$currPos) === 93) {
+                s10 = peg$c2;
+                peg$currPos++;
+              } else {
+                s10 = peg$FAILED;
+                if (peg$silentFails === 0) {
+                  peg$fail(peg$e3);
+                }
+              }
+              if (s10 !== peg$FAILED) {
+                s0 = peg$f2(s4, s7);
+              } else {
+                peg$currPos = s0;
+                s0 = peg$FAILED;
+              }
+            } else {
+              peg$currPos = s0;
+              s0 = peg$FAILED;
+            }
+          } else {
+            peg$currPos = s0;
+            s0 = peg$FAILED;
+          }
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e0);
+        }
+      }
+      return s0;
+    }
+    function peg$parsetagName() {
+      var s0, s1, s2;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      s1 = [];
+      s2 = input.charAt(peg$currPos);
+      if (peg$r0.test(s2)) {
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e5);
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        while (s2 !== peg$FAILED) {
+          s1.push(s2);
+          s2 = input.charAt(peg$currPos);
+          if (peg$r0.test(s2)) {
+            peg$currPos++;
+          } else {
+            s2 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e5);
+            }
+          }
+        }
+      } else {
+        s1 = peg$FAILED;
+      }
+      if (s1 !== peg$FAILED) {
+        s0 = input.substring(s0, peg$currPos);
+      } else {
+        s0 = s1;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e4);
+        }
+      }
+      return s0;
+    }
+    function peg$parsetagValue() {
+      var s0, s1, s2;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      s1 = [];
+      s2 = input.charAt(peg$currPos);
+      if (peg$r1.test(s2)) {
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e7);
+        }
+      }
+      while (s2 !== peg$FAILED) {
+        s1.push(s2);
+        s2 = input.charAt(peg$currPos);
+        if (peg$r1.test(s2)) {
+          peg$currPos++;
+        } else {
+          s2 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e7);
+          }
+        }
+      }
+      s0 = input.substring(s0, peg$currPos);
+      peg$silentFails--;
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) {
+        peg$fail(peg$e6);
+      }
+      return s0;
+    }
+    function peg$parsemoveTextSection() {
+      var s0, s1, s3;
+      s0 = peg$currPos;
+      s1 = peg$parseline();
+      peg$parse_();
+      s3 = peg$parsegameTerminationMarker();
+      if (s3 === peg$FAILED) {
+        s3 = null;
+      }
+      peg$parse_();
+      s0 = peg$f3(s1, s3);
+      return s0;
+    }
+    function peg$parseline() {
+      var s0, s1, s2, s3;
+      s0 = peg$currPos;
+      s1 = peg$parsecomment();
+      if (s1 === peg$FAILED) {
+        s1 = null;
+      }
+      s2 = [];
+      s3 = peg$parsemove();
+      while (s3 !== peg$FAILED) {
+        s2.push(s3);
+        s3 = peg$parsemove();
+      }
+      s0 = peg$f4(s1, s2);
+      return s0;
+    }
+    function peg$parsemove() {
+      var s0, s4, s5, s6, s7, s8, s9, s10;
+      s0 = peg$currPos;
+      peg$parse_();
+      peg$parsemoveNumber();
+      peg$parse_();
+      s4 = peg$parsesan();
+      if (s4 !== peg$FAILED) {
+        s5 = peg$parsesuffixAnnotation();
+        if (s5 === peg$FAILED) {
+          s5 = null;
+        }
+        s6 = [];
+        s7 = peg$parsenag();
+        while (s7 !== peg$FAILED) {
+          s6.push(s7);
+          s7 = peg$parsenag();
+        }
+        s7 = peg$parse_();
+        s8 = peg$parsecomment();
+        if (s8 === peg$FAILED) {
+          s8 = null;
+        }
+        s9 = [];
+        s10 = peg$parsevariation();
+        while (s10 !== peg$FAILED) {
+          s9.push(s10);
+          s10 = peg$parsevariation();
+        }
+        s0 = peg$f5(s4, s5, s6, s8, s9);
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      return s0;
+    }
+    function peg$parsemoveNumber() {
+      var s0, s1, s2, s3, s4, s5;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      s1 = [];
+      s2 = input.charAt(peg$currPos);
+      if (peg$r2.test(s2)) {
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e9);
+        }
+      }
+      while (s2 !== peg$FAILED) {
+        s1.push(s2);
+        s2 = input.charAt(peg$currPos);
+        if (peg$r2.test(s2)) {
+          peg$currPos++;
+        } else {
+          s2 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e9);
+          }
+        }
+      }
+      if (input.charCodeAt(peg$currPos) === 46) {
+        s2 = peg$c3;
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e10);
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$parse_();
+        s4 = [];
+        s5 = input.charAt(peg$currPos);
+        if (peg$r3.test(s5)) {
+          peg$currPos++;
+        } else {
+          s5 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e11);
+          }
+        }
+        while (s5 !== peg$FAILED) {
+          s4.push(s5);
+          s5 = input.charAt(peg$currPos);
+          if (peg$r3.test(s5)) {
+            peg$currPos++;
+          } else {
+            s5 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e11);
+            }
+          }
+        }
+        s1 = [s1, s2, s3, s4];
+        s0 = s1;
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e8);
+        }
+      }
+      return s0;
+    }
+    function peg$parsesan() {
+      var s0, s1, s2, s3, s4, s5;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      s1 = peg$currPos;
+      if (input.substr(peg$currPos, 5) === peg$c4) {
+        s2 = peg$c4;
+        peg$currPos += 5;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e13);
+        }
+      }
+      if (s2 === peg$FAILED) {
+        if (input.substr(peg$currPos, 3) === peg$c5) {
+          s2 = peg$c5;
+          peg$currPos += 3;
+        } else {
+          s2 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e14);
+          }
+        }
+        if (s2 === peg$FAILED) {
+          if (input.substr(peg$currPos, 5) === peg$c6) {
+            s2 = peg$c6;
+            peg$currPos += 5;
+          } else {
+            s2 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e15);
+            }
+          }
+          if (s2 === peg$FAILED) {
+            if (input.substr(peg$currPos, 3) === peg$c7) {
+              s2 = peg$c7;
+              peg$currPos += 3;
+            } else {
+              s2 = peg$FAILED;
+              if (peg$silentFails === 0) {
+                peg$fail(peg$e16);
+              }
+            }
+            if (s2 === peg$FAILED) {
+              s2 = peg$currPos;
+              s3 = input.charAt(peg$currPos);
+              if (peg$r0.test(s3)) {
+                peg$currPos++;
+              } else {
+                s3 = peg$FAILED;
+                if (peg$silentFails === 0) {
+                  peg$fail(peg$e5);
+                }
+              }
+              if (s3 !== peg$FAILED) {
+                s4 = [];
+                s5 = input.charAt(peg$currPos);
+                if (peg$r4.test(s5)) {
+                  peg$currPos++;
+                } else {
+                  s5 = peg$FAILED;
+                  if (peg$silentFails === 0) {
+                    peg$fail(peg$e17);
+                  }
+                }
+                if (s5 !== peg$FAILED) {
+                  while (s5 !== peg$FAILED) {
+                    s4.push(s5);
+                    s5 = input.charAt(peg$currPos);
+                    if (peg$r4.test(s5)) {
+                      peg$currPos++;
+                    } else {
+                      s5 = peg$FAILED;
+                      if (peg$silentFails === 0) {
+                        peg$fail(peg$e17);
+                      }
+                    }
+                  }
+                } else {
+                  s4 = peg$FAILED;
+                }
+                if (s4 !== peg$FAILED) {
+                  s3 = [s3, s4];
+                  s2 = s3;
+                } else {
+                  peg$currPos = s2;
+                  s2 = peg$FAILED;
+                }
+              } else {
+                peg$currPos = s2;
+                s2 = peg$FAILED;
+              }
+            }
+          }
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = input.charAt(peg$currPos);
+        if (peg$r5.test(s3)) {
+          peg$currPos++;
+        } else {
+          s3 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e18);
+          }
+        }
+        if (s3 === peg$FAILED) {
+          s3 = null;
+        }
+        s2 = [s2, s3];
+        s1 = s2;
+      } else {
+        peg$currPos = s1;
+        s1 = peg$FAILED;
+      }
+      if (s1 !== peg$FAILED) {
+        s0 = input.substring(s0, peg$currPos);
+      } else {
+        s0 = s1;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e12);
+        }
+      }
+      return s0;
+    }
+    function peg$parsesuffixAnnotation() {
+      var s0, s1, s2;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      s1 = [];
+      s2 = input.charAt(peg$currPos);
+      if (peg$r6.test(s2)) {
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e20);
+        }
+      }
+      while (s2 !== peg$FAILED) {
+        s1.push(s2);
+        if (s1.length >= 2) {
+          s2 = peg$FAILED;
+        } else {
+          s2 = input.charAt(peg$currPos);
+          if (peg$r6.test(s2)) {
+            peg$currPos++;
+          } else {
+            s2 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e20);
+            }
+          }
+        }
+      }
+      if (s1.length < 1) {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      } else {
+        s0 = s1;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e19);
+        }
+      }
+      return s0;
+    }
+    function peg$parsenag() {
+      var s0, s2, s3, s4, s5;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      peg$parse_();
+      if (input.charCodeAt(peg$currPos) === 36) {
+        s2 = peg$c8;
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e22);
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$currPos;
+        s4 = [];
+        s5 = input.charAt(peg$currPos);
+        if (peg$r2.test(s5)) {
+          peg$currPos++;
+        } else {
+          s5 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e9);
+          }
+        }
+        if (s5 !== peg$FAILED) {
+          while (s5 !== peg$FAILED) {
+            s4.push(s5);
+            s5 = input.charAt(peg$currPos);
+            if (peg$r2.test(s5)) {
+              peg$currPos++;
+            } else {
+              s5 = peg$FAILED;
+              if (peg$silentFails === 0) {
+                peg$fail(peg$e9);
+              }
+            }
+          }
+        } else {
+          s4 = peg$FAILED;
+        }
+        if (s4 !== peg$FAILED) {
+          s3 = input.substring(s3, peg$currPos);
+        } else {
+          s3 = s4;
+        }
+        if (s3 !== peg$FAILED) {
+          s0 = peg$f6(s3);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e21);
+        }
+      }
+      return s0;
+    }
+    function peg$parsecomment() {
+      var s0;
+      s0 = peg$parsebraceComment();
+      if (s0 === peg$FAILED) {
+        s0 = peg$parserestOfLineComment();
+      }
+      return s0;
+    }
+    function peg$parsebraceComment() {
+      var s0, s1, s2, s3, s4;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      if (input.charCodeAt(peg$currPos) === 123) {
+        s1 = peg$c9;
+        peg$currPos++;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e24);
+        }
+      }
+      if (s1 !== peg$FAILED) {
+        s2 = peg$currPos;
+        s3 = [];
+        s4 = input.charAt(peg$currPos);
+        if (peg$r7.test(s4)) {
+          peg$currPos++;
+        } else {
+          s4 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e25);
+          }
+        }
+        while (s4 !== peg$FAILED) {
+          s3.push(s4);
+          s4 = input.charAt(peg$currPos);
+          if (peg$r7.test(s4)) {
+            peg$currPos++;
+          } else {
+            s4 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e25);
+            }
+          }
+        }
+        s2 = input.substring(s2, peg$currPos);
+        if (input.charCodeAt(peg$currPos) === 125) {
+          s3 = peg$c10;
+          peg$currPos++;
+        } else {
+          s3 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e26);
+          }
+        }
+        if (s3 !== peg$FAILED) {
+          s0 = peg$f7(s2);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e23);
+        }
+      }
+      return s0;
+    }
+    function peg$parserestOfLineComment() {
+      var s0, s1, s2, s3, s4;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      if (input.charCodeAt(peg$currPos) === 59) {
+        s1 = peg$c11;
+        peg$currPos++;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e28);
+        }
+      }
+      if (s1 !== peg$FAILED) {
+        s2 = peg$currPos;
+        s3 = [];
+        s4 = input.charAt(peg$currPos);
+        if (peg$r8.test(s4)) {
+          peg$currPos++;
+        } else {
+          s4 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e29);
+          }
+        }
+        while (s4 !== peg$FAILED) {
+          s3.push(s4);
+          s4 = input.charAt(peg$currPos);
+          if (peg$r8.test(s4)) {
+            peg$currPos++;
+          } else {
+            s4 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e29);
+            }
+          }
+        }
+        s2 = input.substring(s2, peg$currPos);
+        s0 = peg$f8(s2);
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e27);
+        }
+      }
+      return s0;
+    }
+    function peg$parsevariation() {
+      var s0, s2, s3, s5;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      peg$parse_();
+      if (input.charCodeAt(peg$currPos) === 40) {
+        s2 = peg$c12;
+        peg$currPos++;
+      } else {
+        s2 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e31);
+        }
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$parseline();
+        if (s3 !== peg$FAILED) {
+          peg$parse_();
+          if (input.charCodeAt(peg$currPos) === 41) {
+            s5 = peg$c13;
+            peg$currPos++;
+          } else {
+            s5 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e32);
+            }
+          }
+          if (s5 !== peg$FAILED) {
+            s0 = peg$f9(s3);
+          } else {
+            peg$currPos = s0;
+            s0 = peg$FAILED;
+          }
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e30);
+        }
+      }
+      return s0;
+    }
+    function peg$parsegameTerminationMarker() {
+      var s0, s1, s3;
+      peg$silentFails++;
+      s0 = peg$currPos;
+      if (input.substr(peg$currPos, 3) === peg$c14) {
+        s1 = peg$c14;
+        peg$currPos += 3;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e34);
+        }
+      }
+      if (s1 === peg$FAILED) {
+        if (input.substr(peg$currPos, 3) === peg$c15) {
+          s1 = peg$c15;
+          peg$currPos += 3;
+        } else {
+          s1 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e35);
+          }
+        }
+        if (s1 === peg$FAILED) {
+          if (input.substr(peg$currPos, 7) === peg$c16) {
+            s1 = peg$c16;
+            peg$currPos += 7;
+          } else {
+            s1 = peg$FAILED;
+            if (peg$silentFails === 0) {
+              peg$fail(peg$e36);
+            }
+          }
+          if (s1 === peg$FAILED) {
+            if (input.charCodeAt(peg$currPos) === 42) {
+              s1 = peg$c17;
+              peg$currPos++;
+            } else {
+              s1 = peg$FAILED;
+              if (peg$silentFails === 0) {
+                peg$fail(peg$e37);
+              }
+            }
+          }
+        }
+      }
+      if (s1 !== peg$FAILED) {
+        peg$parse_();
+        s3 = peg$parsecomment();
+        if (s3 === peg$FAILED) {
+          s3 = null;
+        }
+        s0 = peg$f10(s1, s3);
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+      peg$silentFails--;
+      if (s0 === peg$FAILED) {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e33);
+        }
+      }
+      return s0;
+    }
+    function peg$parse_() {
+      var s0, s1;
+      peg$silentFails++;
+      s0 = [];
+      s1 = input.charAt(peg$currPos);
+      if (peg$r9.test(s1)) {
+        peg$currPos++;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) {
+          peg$fail(peg$e39);
+        }
+      }
+      while (s1 !== peg$FAILED) {
+        s0.push(s1);
+        s1 = input.charAt(peg$currPos);
+        if (peg$r9.test(s1)) {
+          peg$currPos++;
+        } else {
+          s1 = peg$FAILED;
+          if (peg$silentFails === 0) {
+            peg$fail(peg$e39);
+          }
+        }
+      }
+      peg$silentFails--;
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) {
+        peg$fail(peg$e38);
+      }
+      return s0;
+    }
+    peg$result = peg$startRuleFunction();
+    if (options.peg$library) {
+      return (
+        /** @type {any} */
+        {
+          peg$result,
+          peg$currPos,
+          peg$FAILED,
+          peg$maxFailExpected,
+          peg$maxFailPos
+        }
+      );
+    }
+    if (peg$result !== peg$FAILED && peg$currPos === input.length) {
+      return peg$result;
+    } else {
+      if (peg$result !== peg$FAILED && peg$currPos < input.length) {
+        peg$fail(peg$endExpectation());
+      }
+      throw peg$buildStructuredError(
+        peg$maxFailExpected,
+        peg$maxFailPos < input.length ? input.charAt(peg$maxFailPos) : null,
+        peg$maxFailPos < input.length ? peg$computeLocation(peg$maxFailPos, peg$maxFailPos + 1) : peg$computeLocation(peg$maxFailPos, peg$maxFailPos)
+      );
+    }
+  }
+  function rotl(x, k) {
+    return (x << k | x >> 64n - k) & 0xffffffffffffffffn;
+  }
+  function wrappingMul(x, y) {
+    return x * y & MASK64;
+  }
+  function xoroshiro128(state) {
+    return function() {
+      let s0 = BigInt(state & MASK64);
+      let s1 = BigInt(state >> 64n & MASK64);
+      const result = wrappingMul(rotl(wrappingMul(s0, 5n), 7n), 9n);
+      s1 ^= s0;
+      s0 = (rotl(s0, 24n) ^ s1 ^ s1 << 16n) & MASK64;
+      s1 = rotl(s1, 37n);
+      state = s1 << 64n | s0;
+      return result;
+    };
+  }
   function rank(square) {
     return square >> 4;
   }
@@ -194,12 +1340,111 @@
   function strippedSan(move3) {
     return move3.replace(/=/, "").replace(/[+#]?[?!]*$/, "");
   }
-  function trimFen(fen) {
-    return fen.split(" ").slice(0, 4).join(" ");
-  }
-  var WHITE, BLACK, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, DEFAULT_POSITION, Move, EMPTY, FLAGS, SQUARES, BITS, SEVEN_TAG_ROSTER, SUPLEMENTAL_TAGS, HEADER_TEMPLATE, Ox88, PAWN_OFFSETS, PIECE_OFFSETS, ATTACKS, RAYS, PIECE_MASKS, SYMBOLS, PROMOTIONS, RANK_1, RANK_2, RANK_7, RANK_8, SIDES, ROOKS, SECOND_RANK, TERMINATION_MARKERS, Chess;
+  var MASK64, rand, PIECE_KEYS, EP_KEYS, CASTLING_KEYS, SIDE_KEY, WHITE, BLACK, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, DEFAULT_POSITION, Move, EMPTY, FLAGS, SQUARES, BITS, SEVEN_TAG_ROSTER, SUPLEMENTAL_TAGS, HEADER_TEMPLATE, Ox88, PAWN_OFFSETS, PIECE_OFFSETS, ATTACKS, RAYS, PIECE_MASKS, SYMBOLS, PROMOTIONS, RANK_1, RANK_2, RANK_7, RANK_8, SIDES, ROOKS, SECOND_RANK, SAN_NULLMOVE, Chess;
   var init_chess = __esm({
-    "node_modules/.pnpm/chess.js@1.2.0/node_modules/chess.js/dist/esm/chess.js"() {
+    "node_modules/.pnpm/chess.js@1.4.0/node_modules/chess.js/dist/esm/chess.js"() {
+      peg$subclass(peg$SyntaxError, Error);
+      peg$SyntaxError.prototype.format = function(sources) {
+        var str = "Error: " + this.message;
+        if (this.location) {
+          var src = null;
+          var k;
+          for (k = 0; k < sources.length; k++) {
+            if (sources[k].source === this.location.source) {
+              src = sources[k].text.split(/\r\n|\n|\r/g);
+              break;
+            }
+          }
+          var s = this.location.start;
+          var offset_s = this.location.source && typeof this.location.source.offset === "function" ? this.location.source.offset(s) : s;
+          var loc = this.location.source + ":" + offset_s.line + ":" + offset_s.column;
+          if (src) {
+            var e = this.location.end;
+            var filler = peg$padEnd("", offset_s.line.toString().length, " ");
+            var line = src[s.line - 1];
+            var last = s.line === e.line ? e.column : line.length + 1;
+            var hatLen = last - s.column || 1;
+            str += "\n --> " + loc + "\n" + filler + " |\n" + offset_s.line + " | " + line + "\n" + filler + " | " + peg$padEnd("", s.column - 1, " ") + peg$padEnd("", hatLen, "^");
+          } else {
+            str += "\n at " + loc;
+          }
+        }
+        return str;
+      };
+      peg$SyntaxError.buildMessage = function(expected, found) {
+        var DESCRIBE_EXPECTATION_FNS = {
+          literal: function(expectation) {
+            return '"' + literalEscape(expectation.text) + '"';
+          },
+          class: function(expectation) {
+            var escapedParts = expectation.parts.map(function(part) {
+              return Array.isArray(part) ? classEscape(part[0]) + "-" + classEscape(part[1]) : classEscape(part);
+            });
+            return "[" + (expectation.inverted ? "^" : "") + escapedParts.join("") + "]";
+          },
+          any: function() {
+            return "any character";
+          },
+          end: function() {
+            return "end of input";
+          },
+          other: function(expectation) {
+            return expectation.description;
+          }
+        };
+        function hex(ch) {
+          return ch.charCodeAt(0).toString(16).toUpperCase();
+        }
+        function literalEscape(s) {
+          return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\0/g, "\\0").replace(/\t/g, "\\t").replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/[\x00-\x0F]/g, function(ch) {
+            return "\\x0" + hex(ch);
+          }).replace(/[\x10-\x1F\x7F-\x9F]/g, function(ch) {
+            return "\\x" + hex(ch);
+          });
+        }
+        function classEscape(s) {
+          return s.replace(/\\/g, "\\\\").replace(/\]/g, "\\]").replace(/\^/g, "\\^").replace(/-/g, "\\-").replace(/\0/g, "\\0").replace(/\t/g, "\\t").replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/[\x00-\x0F]/g, function(ch) {
+            return "\\x0" + hex(ch);
+          }).replace(/[\x10-\x1F\x7F-\x9F]/g, function(ch) {
+            return "\\x" + hex(ch);
+          });
+        }
+        function describeExpectation(expectation) {
+          return DESCRIBE_EXPECTATION_FNS[expectation.type](expectation);
+        }
+        function describeExpected(expected2) {
+          var descriptions = expected2.map(describeExpectation);
+          var i, j;
+          descriptions.sort();
+          if (descriptions.length > 0) {
+            for (i = 1, j = 1; i < descriptions.length; i++) {
+              if (descriptions[i - 1] !== descriptions[i]) {
+                descriptions[j] = descriptions[i];
+                j++;
+              }
+            }
+            descriptions.length = j;
+          }
+          switch (descriptions.length) {
+            case 1:
+              return descriptions[0];
+            case 2:
+              return descriptions[0] + " or " + descriptions[1];
+            default:
+              return descriptions.slice(0, -1).join(", ") + ", or " + descriptions[descriptions.length - 1];
+          }
+        }
+        function describeFound(found2) {
+          return found2 ? '"' + literalEscape(found2) + '"' : "end of input";
+        }
+        return "Expected " + describeExpected(expected) + " but " + describeFound(found) + " found.";
+      };
+      MASK64 = 0xffffffffffffffffn;
+      rand = xoroshiro128(0xa187eb39cdcaed8f31c4b365b102e01en);
+      PIECE_KEYS = Array.from({ length: 2 }, () => Array.from({ length: 6 }, () => Array.from({ length: 128 }, () => rand())));
+      EP_KEYS = Array.from({ length: 8 }, () => rand());
+      CASTLING_KEYS = Array.from({ length: 16 }, () => rand());
+      SIDE_KEY = rand();
       WHITE = "w";
       BLACK = "b";
       PAWN = "p";
@@ -282,7 +1527,8 @@
         EP_CAPTURE: "e",
         PROMOTION: "p",
         KSIDE_CASTLE: "k",
-        QSIDE_CASTLE: "q"
+        QSIDE_CASTLE: "q",
+        NULL_MOVE: "-"
       };
       SQUARES = [
         "a8",
@@ -357,7 +1603,8 @@
         EP_CAPTURE: 8,
         PROMOTION: 16,
         KSIDE_CASTLE: 32,
-        QSIDE_CASTLE: 64
+        QSIDE_CASTLE: 64,
+        NULL_MOVE: 128
       };
       SEVEN_TAG_ROSTER = {
         Event: "?",
@@ -985,7 +2232,7 @@
         ]
       };
       SECOND_RANK = { b: RANK_7, w: RANK_2 };
-      TERMINATION_MARKERS = ["1-0", "0-1", "1/2-1/2", "*"];
+      SAN_NULLMOVE = "--";
       Chess = class {
         _board = new Array(128);
         _turn = WHITE;
@@ -997,8 +2244,9 @@
         _history = [];
         _comments = {};
         _castling = { w: 0, b: 0 };
+        _hash = 0n;
         // tracks number of times a position has been seen for repetition checking
-        _positionCount = {};
+        _positionCount = /* @__PURE__ */ new Map();
         constructor(fen = DEFAULT_POSITION, { skipValidation = false } = {}) {
           this.load(fen, { skipValidation });
         }
@@ -1013,7 +2261,8 @@
           this._history = [];
           this._comments = {};
           this._header = preserveHeaders ? this._header : { ...HEADER_TEMPLATE };
-          this._positionCount = {};
+          this._hash = this._computeHash();
+          this._positionCount = /* @__PURE__ */ new Map();
           this._header["SetUp"] = null;
           this._header["FEN"] = null;
         }
@@ -1061,10 +2310,11 @@
           this._epSquare = tokens[3] === "-" ? EMPTY : Ox88[tokens[3]];
           this._halfMoves = parseInt(tokens[4], 10);
           this._moveNumber = parseInt(tokens[5], 10);
+          this._hash = this._computeHash();
           this._updateSetup(fen);
-          this._incPositionCount(fen);
+          this._incPositionCount();
         }
-        fen() {
+        fen({ forceEnpassantSquare = false } = {}) {
           let empty = 0;
           let fen = "";
           for (let i = Ox88.a8; i <= Ox88.h1; i++) {
@@ -1105,27 +2355,31 @@
           castling = castling || "-";
           let epSquare = "-";
           if (this._epSquare !== EMPTY) {
-            const bigPawnSquare = this._epSquare + (this._turn === WHITE ? 16 : -16);
-            const squares = [bigPawnSquare + 1, bigPawnSquare - 1];
-            for (const square of squares) {
-              if (square & 136) {
-                continue;
-              }
-              const color = this._turn;
-              if (this._board[square]?.color === color && this._board[square]?.type === PAWN) {
-                this._makeMove({
-                  color,
-                  from: square,
-                  to: this._epSquare,
-                  piece: PAWN,
-                  captured: PAWN,
-                  flags: BITS.EP_CAPTURE
-                });
-                const isLegal = !this._isKingAttacked(color);
-                this._undoMove();
-                if (isLegal) {
-                  epSquare = algebraic(this._epSquare);
-                  break;
+            if (forceEnpassantSquare) {
+              epSquare = algebraic(this._epSquare);
+            } else {
+              const bigPawnSquare = this._epSquare + (this._turn === WHITE ? 16 : -16);
+              const squares = [bigPawnSquare + 1, bigPawnSquare - 1];
+              for (const square of squares) {
+                if (square & 136) {
+                  continue;
+                }
+                const color = this._turn;
+                if (this._board[square]?.color === color && this._board[square]?.type === PAWN) {
+                  this._makeMove({
+                    color,
+                    from: square,
+                    to: this._epSquare,
+                    piece: PAWN,
+                    captured: PAWN,
+                    flags: BITS.EP_CAPTURE
+                  });
+                  const isLegal = !this._isKingAttacked(color);
+                  this._undoMove();
+                  if (isLegal) {
+                    epSquare = algebraic(this._epSquare);
+                    break;
+                  }
                 }
               }
             }
@@ -1138,6 +2392,50 @@
             this._halfMoves,
             this._moveNumber
           ].join(" ");
+        }
+        _pieceKey(i) {
+          if (!this._board[i]) {
+            return 0n;
+          }
+          const { color, type } = this._board[i];
+          const colorIndex = {
+            w: 0,
+            b: 1
+          }[color];
+          const typeIndex = {
+            p: 0,
+            n: 1,
+            b: 2,
+            r: 3,
+            q: 4,
+            k: 5
+          }[type];
+          return PIECE_KEYS[colorIndex][typeIndex][i];
+        }
+        _epKey() {
+          return this._epSquare === EMPTY ? 0n : EP_KEYS[this._epSquare & 7];
+        }
+        _castlingKey() {
+          const index = this._castling.w >> 5 | this._castling.b >> 3;
+          return CASTLING_KEYS[index];
+        }
+        _computeHash() {
+          let hash2 = 0n;
+          for (let i = Ox88.a8; i <= Ox88.h1; i++) {
+            if (i & 136) {
+              i += 7;
+              continue;
+            }
+            if (this._board[i]) {
+              hash2 ^= this._pieceKey(i);
+            }
+          }
+          hash2 ^= this._epKey();
+          hash2 ^= this._castlingKey();
+          if (this._turn === "b") {
+            hash2 ^= SIDE_KEY;
+          }
+          return hash2;
         }
         /*
          * Called when the initial board setup is changed with put() or remove().
@@ -1187,6 +2485,11 @@
           }
           return false;
         }
+        _set(sq, piece) {
+          this._hash ^= this._pieceKey(sq);
+          this._board[sq] = piece;
+          this._hash ^= this._pieceKey(sq);
+        }
         _put({ type, color }, square) {
           if (SYMBOLS.indexOf(type.toLowerCase()) === -1) {
             return false;
@@ -1202,15 +2505,19 @@
           if (currentPieceOnSquare && currentPieceOnSquare.type === KING) {
             this._kings[currentPieceOnSquare.color] = EMPTY;
           }
-          this._board[sq] = { type, color };
+          this._set(sq, { type, color });
           if (type === KING) {
             this._kings[color] = sq;
           }
           return true;
         }
+        _clear(sq) {
+          this._hash ^= this._pieceKey(sq);
+          delete this._board[sq];
+        }
         remove(square) {
           const piece = this.get(square);
-          delete this._board[Ox88[square]];
+          this._clear(Ox88[square]);
           if (piece && piece.type === KING) {
             this._kings[piece.color] = EMPTY;
           }
@@ -1220,20 +2527,22 @@
           return piece;
         }
         _updateCastlingRights() {
+          this._hash ^= this._castlingKey();
           const whiteKingInPlace = this._board[Ox88.e1]?.type === KING && this._board[Ox88.e1]?.color === WHITE;
           const blackKingInPlace = this._board[Ox88.e8]?.type === KING && this._board[Ox88.e8]?.color === BLACK;
           if (!whiteKingInPlace || this._board[Ox88.a1]?.type !== ROOK || this._board[Ox88.a1]?.color !== WHITE) {
-            this._castling.w &= ~BITS.QSIDE_CASTLE;
+            this._castling.w &= -65;
           }
           if (!whiteKingInPlace || this._board[Ox88.h1]?.type !== ROOK || this._board[Ox88.h1]?.color !== WHITE) {
-            this._castling.w &= ~BITS.KSIDE_CASTLE;
+            this._castling.w &= -33;
           }
           if (!blackKingInPlace || this._board[Ox88.a8]?.type !== ROOK || this._board[Ox88.a8]?.color !== BLACK) {
-            this._castling.b &= ~BITS.QSIDE_CASTLE;
+            this._castling.b &= -65;
           }
           if (!blackKingInPlace || this._board[Ox88.h8]?.type !== ROOK || this._board[Ox88.h8]?.color !== BLACK) {
-            this._castling.b &= ~BITS.KSIDE_CASTLE;
+            this._castling.b &= -33;
           }
+          this._hash ^= this._castlingKey();
         }
         _updateEnPassantSquare() {
           if (this._epSquare === EMPTY) {
@@ -1243,11 +2552,13 @@
           const currentSquare = this._epSquare + (this._turn === WHITE ? 16 : -16);
           const attackers = [currentSquare + 1, currentSquare - 1];
           if (this._board[startSquare] !== null || this._board[this._epSquare] !== null || this._board[currentSquare]?.color !== swapColor(this._turn) || this._board[currentSquare]?.type !== PAWN) {
+            this._hash ^= this._epKey();
             this._epSquare = EMPTY;
             return;
           }
           const canCapture = (square) => !(square & 136) && this._board[square]?.color === this._turn && this._board[square]?.type === PAWN;
           if (!attackers.some(canCapture)) {
+            this._hash ^= this._epKey();
             this._epSquare = EMPTY;
           }
         }
@@ -1323,6 +2634,9 @@
           const square = this._kings[color];
           return square === -1 ? false : this._attacked(swapColor(color), square);
         }
+        hash() {
+          return this._hash.toString(16);
+        }
         isAttacked(square, attackedBy) {
           return this._attacked(attackedBy, Ox88[square]);
         }
@@ -1385,7 +2699,7 @@
           return false;
         }
         isThreefoldRepetition() {
-          return this._getPositionCount(this.fen()) >= 3;
+          return this._getPositionCount(this._hash) >= 3;
         }
         isDrawByFiftyMoves() {
           return this._halfMoves >= 100;
@@ -1394,7 +2708,7 @@
           return this.isDrawByFiftyMoves() || this.isStalemate() || this.isInsufficientMaterial() || this.isThreefoldRepetition();
         }
         isGameOver() {
-          return this.isCheckmate() || this.isStalemate() || this.isDraw();
+          return this.isCheckmate() || this.isDraw();
         }
         moves({ verbose = false, square = void 0, piece = void 0 } = {}) {
           const moves = this._moves({ square, piece });
@@ -1511,6 +2825,8 @@
           let moveObj = null;
           if (typeof move3 === "string") {
             moveObj = this._moveFromSan(move3, strict);
+          } else if (move3 === null) {
+            moveObj = this._moveFromSan(SAN_NULLMOVE, strict);
           } else if (typeof move3 === "object") {
             const moves = this._moves();
             for (let i = 0, len = moves.length; i < len; i++) {
@@ -1527,9 +2843,12 @@
               throw new Error(`Invalid move: ${JSON.stringify(move3)}`);
             }
           }
+          if (this.isCheck() && moveObj.flags & BITS.NULL_MOVE) {
+            throw new Error("Null move not allowed when in check");
+          }
           const prettyMove = new Move(this, moveObj);
           this._makeMove(moveObj);
-          this._incPositionCount(prettyMove.after);
+          this._incPositionCount();
           return prettyMove;
         }
         _push(move3) {
@@ -1543,34 +2862,52 @@
             moveNumber: this._moveNumber
           });
         }
+        _movePiece(from, to) {
+          this._hash ^= this._pieceKey(from);
+          this._board[to] = this._board[from];
+          delete this._board[from];
+          this._hash ^= this._pieceKey(to);
+        }
         _makeMove(move3) {
           const us = this._turn;
           const them = swapColor(us);
           this._push(move3);
-          this._board[move3.to] = this._board[move3.from];
-          delete this._board[move3.from];
+          if (move3.flags & BITS.NULL_MOVE) {
+            if (us === BLACK) {
+              this._moveNumber++;
+            }
+            this._halfMoves++;
+            this._turn = them;
+            this._epSquare = EMPTY;
+            return;
+          }
+          this._hash ^= this._epKey();
+          this._hash ^= this._castlingKey();
+          if (move3.captured) {
+            this._hash ^= this._pieceKey(move3.to);
+          }
+          this._movePiece(move3.from, move3.to);
           if (move3.flags & BITS.EP_CAPTURE) {
             if (this._turn === BLACK) {
-              delete this._board[move3.to - 16];
+              this._clear(move3.to - 16);
             } else {
-              delete this._board[move3.to + 16];
+              this._clear(move3.to + 16);
             }
           }
           if (move3.promotion) {
-            this._board[move3.to] = { type: move3.promotion, color: us };
+            this._clear(move3.to);
+            this._set(move3.to, { type: move3.promotion, color: us });
           }
           if (this._board[move3.to].type === KING) {
             this._kings[us] = move3.to;
             if (move3.flags & BITS.KSIDE_CASTLE) {
               const castlingTo = move3.to - 1;
               const castlingFrom = move3.to + 1;
-              this._board[castlingTo] = this._board[castlingFrom];
-              delete this._board[castlingFrom];
+              this._movePiece(castlingFrom, castlingTo);
             } else if (move3.flags & BITS.QSIDE_CASTLE) {
               const castlingTo = move3.to + 1;
               const castlingFrom = move3.to - 2;
-              this._board[castlingTo] = this._board[castlingFrom];
-              delete this._board[castlingFrom];
+              this._movePiece(castlingFrom, castlingTo);
             }
             this._castling[us] = 0;
           }
@@ -1590,11 +2927,19 @@
               }
             }
           }
+          this._hash ^= this._castlingKey();
           if (move3.flags & BITS.BIG_PAWN) {
+            let epSquare;
             if (us === BLACK) {
-              this._epSquare = move3.to - 16;
+              epSquare = move3.to - 16;
             } else {
-              this._epSquare = move3.to + 16;
+              epSquare = move3.to + 16;
+            }
+            if (!(move3.to - 1 & 136) && this._board[move3.to - 1]?.type === PAWN && this._board[move3.to - 1]?.color === them || !(move3.to + 1 & 136) && this._board[move3.to + 1]?.type === PAWN && this._board[move3.to + 1]?.color === them) {
+              this._epSquare = epSquare;
+              this._hash ^= this._epKey();
+            } else {
+              this._epSquare = EMPTY;
             }
           } else {
             this._epSquare = EMPTY;
@@ -1610,12 +2955,14 @@
             this._moveNumber++;
           }
           this._turn = them;
+          this._hash ^= SIDE_KEY;
         }
         undo() {
+          const hash2 = this._hash;
           const move3 = this._undoMove();
           if (move3) {
             const prettyMove = new Move(this, move3);
-            this._decPositionCount(prettyMove.after);
+            this._decPositionCount(hash2);
             return prettyMove;
           }
           return null;
@@ -1625,6 +2972,8 @@
           if (old === void 0) {
             return null;
           }
+          this._hash ^= this._epKey();
+          this._hash ^= this._castlingKey();
           const move3 = old.move;
           this._kings = old.kings;
           this._turn = old.turn;
@@ -1632,11 +2981,19 @@
           this._epSquare = old.epSquare;
           this._halfMoves = old.halfMoves;
           this._moveNumber = old.moveNumber;
+          this._hash ^= this._epKey();
+          this._hash ^= this._castlingKey();
+          this._hash ^= SIDE_KEY;
           const us = this._turn;
           const them = swapColor(us);
-          this._board[move3.from] = this._board[move3.to];
-          this._board[move3.from].type = move3.piece;
-          delete this._board[move3.to];
+          if (move3.flags & BITS.NULL_MOVE) {
+            return move3;
+          }
+          this._movePiece(move3.to, move3.from);
+          if (move3.piece) {
+            this._clear(move3.from);
+            this._set(move3.from, { type: move3.piece, color: us });
+          }
           if (move3.captured) {
             if (move3.flags & BITS.EP_CAPTURE) {
               let index;
@@ -1645,9 +3002,9 @@
               } else {
                 index = move3.to + 16;
               }
-              this._board[index] = { type: PAWN, color: them };
+              this._set(index, { type: PAWN, color: them });
             } else {
-              this._board[move3.to] = { type: move3.captured, color: them };
+              this._set(move3.to, { type: move3.captured, color: them });
             }
           }
           if (move3.flags & (BITS.KSIDE_CASTLE | BITS.QSIDE_CASTLE)) {
@@ -1659,8 +3016,7 @@
               castlingTo = move3.to - 2;
               castlingFrom = move3.to + 1;
             }
-            this._board[castlingTo] = this._board[castlingFrom];
-            delete this._board[castlingFrom];
+            this._movePiece(castlingFrom, castlingTo);
           }
           return move3;
         }
@@ -1803,31 +3159,13 @@
           }
           return nonNullHeaders;
         }
-        loadPgn(pgn, { strict = false, newlineChar = "\r?\n" } = {}) {
-          function mask(str) {
-            return str.replace(/\\/g, "\\");
+        loadPgn(pgn2, { strict = false, newlineChar = "\r?\n" } = {}) {
+          if (newlineChar !== "\r?\n") {
+            pgn2 = pgn2.replace(new RegExp(newlineChar, "g"), "\n");
           }
-          function parsePgnHeader(header) {
-            const headerObj = {};
-            const headers2 = header.split(new RegExp(mask(newlineChar)));
-            let key = "";
-            let value = "";
-            for (let i = 0; i < headers2.length; i++) {
-              const regex = /^\s*\[\s*([A-Za-z]+)\s*"(.*)"\s*\]\s*$/;
-              key = headers2[i].replace(regex, "$1");
-              value = headers2[i].replace(regex, "$2");
-              if (key.trim().length > 0) {
-                headerObj[key] = value;
-              }
-            }
-            return headerObj;
-          }
-          pgn = pgn.trim();
-          const headerRegex = new RegExp("^(\\[((?:" + mask(newlineChar) + ")|.)*\\])((?:\\s*" + mask(newlineChar) + "){2}|(?:\\s*" + mask(newlineChar) + ")*$)");
-          const headerRegexResults = headerRegex.exec(pgn);
-          const headerString = headerRegexResults ? headerRegexResults.length >= 2 ? headerRegexResults[1] : "" : "";
+          const parsedPgn = peg$parse(pgn2);
           this.reset();
-          const headers = parsePgnHeader(headerString);
+          const headers = parsedPgn.headers;
           let fen = "";
           for (const key in headers) {
             if (key.toLowerCase() === "fen") {
@@ -1847,59 +3185,23 @@
               this.load(headers["FEN"], { preserveHeaders: true });
             }
           }
-          function toHex(s) {
-            return Array.from(s).map(function(c) {
-              return c.charCodeAt(0) < 128 ? c.charCodeAt(0).toString(16) : encodeURIComponent(c).replace(/%/g, "").toLowerCase();
-            }).join("");
-          }
-          function fromHex(s) {
-            return s.length == 0 ? "" : decodeURIComponent("%" + (s.match(/.{1,2}/g) || []).join("%"));
-          }
-          const encodeComment = function(s) {
-            s = s.replace(new RegExp(mask(newlineChar), "g"), " ");
-            return `{${toHex(s.slice(1, s.length - 1))}}`;
-          };
-          const decodeComment = function(s) {
-            if (s.startsWith("{") && s.endsWith("}")) {
-              return fromHex(s.slice(1, s.length - 1));
-            }
-          };
-          let ms = pgn.replace(headerString, "").replace(
-            // encode comments so they don't get deleted below
-            new RegExp(`({[^}]*})+?|;([^${mask(newlineChar)}]*)`, "g"),
-            function(_match, bracket, semicolon) {
-              return bracket !== void 0 ? encodeComment(bracket) : " " + encodeComment(`{${semicolon.slice(1)}}`);
-            }
-          ).replace(new RegExp(mask(newlineChar), "g"), " ");
-          const ravRegex = /(\([^()]+\))+?/g;
-          while (ravRegex.test(ms)) {
-            ms = ms.replace(ravRegex, "");
-          }
-          ms = ms.replace(/\d+\.(\.\.)?/g, "");
-          ms = ms.replace(/\.\.\./g, "");
-          ms = ms.replace(/\$\d+/g, "");
-          let moves = ms.trim().split(new RegExp(/\s+/));
-          moves = moves.filter((move3) => move3 !== "");
-          let result = "";
-          for (let halfMove = 0; halfMove < moves.length; halfMove++) {
-            const comment = decodeComment(moves[halfMove]);
-            if (comment !== void 0) {
-              this._comments[this.fen()] = comment;
-              continue;
-            }
-            const move3 = this._moveFromSan(moves[halfMove], strict);
-            if (move3 == null) {
-              if (TERMINATION_MARKERS.indexOf(moves[halfMove]) > -1) {
-                result = moves[halfMove];
+          let node2 = parsedPgn.root;
+          while (node2) {
+            if (node2.move) {
+              const move3 = this._moveFromSan(node2.move, strict);
+              if (move3 == null) {
+                throw new Error(`Invalid move in PGN: ${node2.move}`);
               } else {
-                throw new Error(`Invalid move in PGN: ${moves[halfMove]}`);
+                this._makeMove(move3);
+                this._incPositionCount();
               }
-            } else {
-              result = "";
-              this._makeMove(move3);
-              this._incPositionCount(this.fen());
             }
+            if (node2.comment !== void 0) {
+              this._comments[this.fen()] = node2.comment;
+            }
+            node2 = node2.variations[0];
           }
+          const result = parsedPgn.result;
           if (result && Object.keys(this._header).length && this._header["Result"] !== result) {
             this.setHeader("Result", result);
           }
@@ -1921,6 +3223,8 @@
             output = "O-O";
           } else if (move3.flags & BITS.QSIDE_CASTLE) {
             output = "O-O-O";
+          } else if (move3.flags & BITS.NULL_MOVE) {
+            return SAN_NULLMOVE;
           } else {
             if (move3.piece !== PAWN) {
               const disambiguator = getDisambiguator(move3, moves);
@@ -1950,7 +3254,24 @@
         }
         // convert a move from Standard Algebraic Notation (SAN) to 0x88 coordinates
         _moveFromSan(move3, strict = false) {
-          const cleanMove = strippedSan(move3);
+          let cleanMove = strippedSan(move3);
+          if (!strict) {
+            if (cleanMove === "0-0") {
+              cleanMove = "O-O";
+            } else if (cleanMove === "0-0-0") {
+              cleanMove = "O-O-O";
+            }
+          }
+          if (cleanMove == SAN_NULLMOVE) {
+            const res = {
+              color: this._turn,
+              from: 0,
+              to: 0,
+              piece: "k",
+              flags: BITS.NULL_MOVE
+            };
+            return res;
+          }
           let pieceType = inferPieceType(cleanMove);
           let moves = this._moves({ legal: true, piece: pieceType });
           for (let i = 0, len = moves.length; i < len; i++) {
@@ -2052,6 +3373,13 @@
           }
           return nodes;
         }
+        setTurn(color) {
+          if (this._turn == color) {
+            return false;
+          }
+          this.move("--");
+          return true;
+        }
         turn() {
           return this._turn;
         }
@@ -2105,27 +3433,20 @@
         }
         /*
          * Keeps track of position occurrence counts for the purpose of repetition
-         * checking. All three methods (`_inc`, `_dec`, and `_get`) trim the
-         * irrelevent information from the fen, initialising new positions, and
-         * removing old positions from the record if their counts are reduced to 0.
+         * checking. Old positions are removed from the map if their counts are reduced to 0.
          */
-        _getPositionCount(fen) {
-          const trimmedFen = trimFen(fen);
-          return this._positionCount[trimmedFen] || 0;
+        _getPositionCount(hash2) {
+          return this._positionCount.get(hash2) ?? 0;
         }
-        _incPositionCount(fen) {
-          const trimmedFen = trimFen(fen);
-          if (this._positionCount[trimmedFen] === void 0) {
-            this._positionCount[trimmedFen] = 0;
-          }
-          this._positionCount[trimmedFen] += 1;
+        _incPositionCount() {
+          this._positionCount.set(this._hash, (this._positionCount.get(this._hash) ?? 0) + 1);
         }
-        _decPositionCount(fen) {
-          const trimmedFen = trimFen(fen);
-          if (this._positionCount[trimmedFen] === 1) {
-            delete this._positionCount[trimmedFen];
+        _decPositionCount(hash2) {
+          const currentCount = this._positionCount.get(hash2) ?? 0;
+          if (currentCount === 1) {
+            this._positionCount.delete(hash2);
           } else {
-            this._positionCount[trimmedFen] -= 1;
+            this._positionCount.set(hash2, currentCount - 1);
           }
         }
         _pruneComments() {
@@ -2214,17 +3535,17 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/types.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js
   var colors, files, ranks;
   var init_types = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/types.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js"() {
       colors = ["white", "black"];
       files = ["a", "b", "c", "d", "e", "f", "g", "h"];
       ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/util.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js
   function memo(f) {
     let v;
     const ret = () => {
@@ -2250,7 +3571,7 @@
   }
   var invRanks, allKeys, pos2key, key2pos, allPos, timer, opposite, distanceSq, samePiece, posToTranslate, translate, translateAndScale, setVisible, eventPosition, isRightButton, createEl;
   var init_util = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/util.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js"() {
       init_types();
       invRanks = [...ranks].reverse();
       allKeys = Array.prototype.concat(...files.map((c) => ranks.map((r) => c + r)));
@@ -2312,7 +3633,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/premove.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js
   function rookFilesOf(pieces, color) {
     const backrank = color === "white" ? "1" : "8";
     const files2 = [];
@@ -2332,7 +3653,7 @@
   }
   var diff, pawn, knight, bishop, rook, queen, king;
   var init_premove = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/premove.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js"() {
       init_util();
       diff = (a, b) => Math.abs(a - b);
       pawn = (color) => (x1, y1, x2, y2) => diff(x1, x2) < 2 && (color === "white" ? (
@@ -2357,7 +3678,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/board.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js
   function callUserFunction(f, ...args) {
     if (f)
       setTimeout(() => f(...args), 1);
@@ -2651,7 +3972,7 @@
   }
   var canMove, whitePov;
   var init_board = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/board.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js"() {
       init_util();
       init_premove();
       canMove = (state, orig, dest) => {
@@ -2662,7 +3983,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/fen.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js
   function read(fen) {
     if (fen === "start")
       fen = initial;
@@ -2718,7 +4039,7 @@
   }
   var initial, roles, letters;
   var init_fen = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/fen.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js"() {
       init_util();
       init_types();
       initial = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -2741,7 +4062,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/config.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js
   function applyAnimation(state, config) {
     if (config.animation) {
       deepMerge(state.animation, config.animation);
@@ -2778,12 +4099,12 @@
   }
   function deepMerge(base, extend) {
     for (const key in extend) {
-      if (Object.prototype.hasOwnProperty.call(extend, key)) {
-        if (Object.prototype.hasOwnProperty.call(base, key) && isPlainObject(base[key]) && isPlainObject(extend[key]))
-          deepMerge(base[key], extend[key]);
-        else
-          base[key] = extend[key];
-      }
+      if (key === "__proto__" || key === "constructor" || !Object.prototype.hasOwnProperty.call(extend, key))
+        continue;
+      if (Object.prototype.hasOwnProperty.call(base, key) && isPlainObject(base[key]) && isPlainObject(extend[key]))
+        deepMerge(base[key], extend[key]);
+      else
+        base[key] = extend[key];
     }
   }
   function isPlainObject(o) {
@@ -2793,13 +4114,13 @@
     return proto === Object.prototype || proto === null;
   }
   var init_config = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/config.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js"() {
       init_board();
       init_fen();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/anim.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js
   function render(mutation, state) {
     const result = mutation(state);
     state.dom.redraw();
@@ -2883,7 +4204,7 @@
   }
   var anim, makePiece, closer, easing;
   var init_anim = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/anim.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js"() {
       init_util();
       anim = (mutation, state) => state.animation.enabled ? animate(mutation, state) : render(mutation, state);
       makePiece = (key, piece) => ({
@@ -2896,7 +4217,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/draw.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js
   function start(state, e) {
     if (e.touches && e.touches.length > 1)
       return;
@@ -2982,14 +4303,14 @@
   }
   var brushes;
   var init_draw = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/draw.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js"() {
       init_board();
       init_util();
       brushes = ["green", "red", "blue", "yellow"];
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drag.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js
   function start2(s, e) {
     if (!(s.trustAllEvents || e.isTrusted))
       return;
@@ -3176,7 +4497,7 @@
     return;
   }
   var init_drag = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drag.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js"() {
       init_board();
       init_util();
       init_draw();
@@ -3184,7 +4505,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/explosion.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js
   function explosion(state, keys) {
     state.exploding = { stage: 1, keys };
     state.dom.redraw();
@@ -3203,11 +4524,11 @@
     }
   }
   var init_explosion = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/explosion.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/api.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js
   function start3(state, redrawAll) {
     function toggleOrientation2() {
       toggleOrientation(state);
@@ -3298,7 +4619,7 @@
     };
   }
   var init_api = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/api.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js"() {
       init_board();
       init_fen();
       init_config();
@@ -3308,7 +4629,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/state.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js
   function defaults() {
     return {
       pieces: read(initial),
@@ -3370,7 +4691,9 @@
       events: {},
       drawable: {
         enabled: true,
+        // can draw
         visible: true,
+        // can view
         defaultSnapToValidMove: true,
         eraseOnClick: true,
         shapes: [],
@@ -3399,13 +4722,13 @@
     };
   }
   var init_state = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/state.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js"() {
       init_fen();
       init_util();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/svg.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js
   function createDefs() {
     const defs = createElement("defs");
     const filter = setAttributes(createElement("filter"), { id: "cg-filter-blur" });
@@ -3711,7 +5034,7 @@
   }
   var hilites;
   var init_svg = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/svg.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js"() {
       init_util();
       hilites = {
         hilitePrimary: { key: "hilitePrimary", color: "#3291ff", opacity: 1, lineWidth: 1 },
@@ -3720,7 +5043,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/wrap.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js
   function renderWrap(element, s) {
     element.innerHTML = "";
     element.classList.add("cg-wrap");
@@ -3791,14 +5114,14 @@
     return el;
   }
   var init_wrap = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/wrap.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js"() {
       init_util();
       init_types();
       init_svg();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drop.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js
   function drop(s, e) {
     if (!s.dropmode.active)
       return;
@@ -3815,14 +5138,14 @@
     s.dom.redraw();
   }
   var init_drop = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drop.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js"() {
       init_board();
       init_util();
       init_drag();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/events.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js
   function bindBoard(s, onResize) {
     const boardEl = s.dom.elements.board;
     if ("ResizeObserver" in window)
@@ -3863,7 +5186,7 @@
   }
   var startDragOrDraw, dragOrDraw;
   var init_events = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/events.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js"() {
       init_drag();
       init_draw();
       init_drop();
@@ -3893,7 +5216,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/render.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js
   function render2(s) {
     const asWhite = whitePov(s), posToTranslate2 = posToTranslate(s.dom.bounds()), boardEl = s.dom.elements.board, pieces = s.pieces, curAnim = s.animation.current, anims = curAnim ? curAnim.plan.anims : /* @__PURE__ */ new Map(), fadings = curAnim ? curAnim.plan.fadings : /* @__PURE__ */ new Map(), curDrag = s.draggable.current, squares = computeSquareClasses(s), samePieces = /* @__PURE__ */ new Set(), sameSquares = /* @__PURE__ */ new Set(), movedPieces = /* @__PURE__ */ new Map(), movedSquares = /* @__PURE__ */ new Map();
     let k, el, pieceAtKey, elPieceName, anim2, fading, pMvdset, pMvd, sMvdset, sMvd;
@@ -4032,8 +5355,8 @@
     (_b = s.addDimensionsCssVarsTo) === null || _b === void 0 ? void 0 : _b.style.setProperty("---cg-height", height + "px");
   }
   function removeNodes(s, nodes) {
-    for (const node of nodes)
-      s.dom.elements.board.removeChild(node);
+    for (const node2 of nodes)
+      s.dom.elements.board.removeChild(node2);
   }
   function posZIndex(pos, asWhite) {
     const minZ = 3;
@@ -4098,7 +5421,7 @@
   }
   var isPieceNode, isSquareNode, pieceNameOf;
   var init_render = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/render.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js"() {
       init_util();
       init_board();
       isPieceNode = (el) => el.tagName === "PIECE";
@@ -4107,7 +5430,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/sync.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js
   function syncShapes2(shapes, root, renderShape3) {
     const hashesInDom = /* @__PURE__ */ new Map(), toRemove = [];
     for (const sc of shapes)
@@ -4129,11 +5452,11 @@
     }
   }
   var init_sync = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/sync.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/autoPieces.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js
   function render3(state, autoPieceEl) {
     const autoPieces = state.drawable.autoShapes.filter((autoShape) => autoShape.piece);
     const autoPieceShapes = autoPieces.map((s) => {
@@ -4169,7 +5492,7 @@
   }
   var hash;
   var init_autoPieces = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/autoPieces.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js"() {
       init_util();
       init_board();
       init_sync();
@@ -4180,7 +5503,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/chessground.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js
   function Chessground(element, config) {
     const maybeState = defaults();
     configure(maybeState, config || {});
@@ -4230,7 +5553,7 @@
     };
   }
   var init_chessground = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/chessground.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js"() {
       init_api();
       init_config();
       init_state();
@@ -4247,7 +5570,7 @@
   function randomTheme(container) {
     const styleSheet = document.createElement("style");
     styleSheet.id = "themeStyles";
-    fetch("/random-theme").then((res) => res.json()).then(({ board, pieces }) => {
+    const applyTheme = (board, pieces) => {
       let themeStyle = `.boardtheme cg-board {
       background-image: url("/assets/images/board/${board}");
     } `;
@@ -4255,30 +5578,45 @@
         themeStyle += `
 .piecetheme cg-board piece.${p}.white {
         background-image: url("/assets/images/pieces/${pieces}/w${p[0].toUpperCase()}.svg");
-    }`;
+      }`;
         themeStyle += `
 .piecetheme cg-board piece.${p}.black {
         background-image: url("/assets/images/pieces/${pieces}/b${p[0].toUpperCase()}.svg");
-    }`;
+      }`;
       }
       themeStyle += `
 .piecetheme cg-board piece.knight.white {
-        background-image: url("/assets/images/pieces/${pieces}/wN.svg");
+      background-image: url("/assets/images/pieces/${pieces}/wN.svg");
     }`;
       themeStyle += `
 .piecetheme cg-board piece.knight.black {
-        background-image: url("/assets/images/pieces/${pieces}/bN.svg");
+      background-image: url("/assets/images/pieces/${pieces}/bN.svg");
     }`;
       styleSheet.textContent = themeStyle;
       container.classList.add("boardtheme", "piecetheme");
+    };
+    fetch("/random-theme").then((res) => {
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    }).then(({ board, pieces }) => {
+      applyTheme(board, pieces);
+    }).catch(() => {
+      console.log("Fetching theme from server failed, using local fallback.");
+      const randomBoard = boardThemes[4];
+      const randomPieces = pieceThemes[5];
+      applyTheme(randomBoard, randomPieces);
     });
     return styleSheet;
   }
-  var pieceNames;
+  var pieceNames, boardThemes, pieceThemes;
   var init_randomTheme = __esm({
     "randomTheme.ts"() {
       "use strict";
       pieceNames = ["king", "queen", "rook", "bishop", "pawn"];
+      boardThemes = ["blue-marble.jpg", "blue.svg", "blue2.jpg", "blue3.jpg", "brown.png", "canvas2.jpg", "green-plastic.png", "green.png", "grey.jpg", "ic.png", "leather.jpg", "maple.jpg", "maple2.jpg", "marble.jpg", "metal.jpg", "ncf-board.png", "olive.jpg", "pink-pyramid.png", "purple.png", "wood.jpg", "wood2.jpg", "wood3.jpg", "wood4.jpg", "xboard.png"];
+      pieceThemes = ["alpha", "anarcandy", "caliente", "california", "cardinal", "cburnett", "celtic", "chess7", "chessnut", "companion", "cooke", "dubrovny", "fantasy", "firi", "fresca", "gioco", "governor", "horsey", "icpieces", "kiwen-suwi", "kosal", "leipzig", "letter", "maestro", "merida", "monarchy", "mpchess", "pirouetti", "pixel", "reillycraig", "rhosgfx", "riohacha", "shapes", "spatial", "staunty", "tatiana", "xkcd"];
     }
   });
 
@@ -4394,7 +5732,7 @@
         });
       }
       function showStatus(msg = "", pzInfo = "") {
-        if (msg != "") document.getElementById("status").textContent = msg;
+        if (msg != "") document.getElementById("status").innerHTML = msg;
         if (pzInfo != "") document.getElementById("puzzleInfo").textContent = pzInfo;
       }
       function makeMove(uci, quiet = false) {
@@ -4404,58 +5742,94 @@
         updateGround();
       }
       async function loadPuzzles() {
-        let puzzleSourceURL = source === "local" ? `http://localhost:5000/api/puzzles?${query}` : `https://lichess.org/api/${source}`;
+        const puzzleSourceURL = source === "local" ? `http://localhost:5000/api/puzzles?${query}` : `https://lichess.org/api/${source}`;
         try {
           const response = await fetch(puzzleSourceURL);
           const data = await response.json();
           let puzzles = [];
-          let initialPuzzleCount2;
+          let initialPuzzleCount;
           if (source === "storm") {
-            puzzles = data.puzzles.map((obj) => ({
-              ...obj,
-              moves: obj.line
+            puzzles = data.puzzles.map((p) => ({
+              id: p.id,
+              rating: p.rating,
+              fen: p.fen,
+              moves: p.line,
+              themes: p.themes || []
             }));
-            initialPuzzleCount2 = puzzles.length;
+            initialPuzzleCount = puzzles.length;
           } else if (source === "streak") {
             const streakIds = data.streak.split(" ");
             if (!streakIds.length) {
               showStatus("No puzzles found!");
               return;
             }
-            const streakResponse = await fetch(
-              `http://localhost:5000/api/streak?ids=${streakIds.join(",")}`
-            );
-            puzzles = await streakResponse.json();
-            initialPuzzleCount2 = streakIds.length;
+            puzzles = streakIds;
+            initialPuzzleCount = streakIds.length;
           } else {
             puzzles = data;
-            initialPuzzleCount2 = puzzles.length;
+            initialPuzzleCount = puzzles.length;
           }
           if (!puzzles.length) {
             showStatus("No puzzles found!");
             return;
           }
           puzzleQueue = puzzles;
-          showStatus("", `${initialPuzzleCount2} puzzles loaded.`);
+          showStatus("", `${initialPuzzleCount} puzzles loaded.`);
           loadNextPuzzle();
         } catch (error) {
           console.error("Error loading puzzles:", error);
           showStatus("Error loading puzzles!");
         }
       }
-      function loadNextPuzzle() {
+      async function loadNextPuzzle() {
         mistake = false;
         if (!puzzleQueue.length) {
           showStatus("", "All puzzles solved! \u{1F389}");
           return;
         }
-        const p = puzzleQueue.shift();
+        let nextItem = puzzleQueue.shift();
+        let p;
+        let isStreakPuzzle = false;
+        if (typeof nextItem === "string") {
+          isStreakPuzzle = true;
+          const puzzleId = nextItem;
+          showStatus("", `Loading puzzle ${puzzleId}... (${puzzleQueue.length} left)`);
+          try {
+            const response = await fetch(`https://lichess.org/api/puzzle/${puzzleId}`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const rawPuzzle = await response.json();
+            const puzzleChess = new Chess();
+            puzzleChess.loadPgn(rawPuzzle.game.pgn);
+            p = {
+              id: rawPuzzle.puzzle.id,
+              rating: rawPuzzle.puzzle.rating,
+              fen: puzzleChess.fen(),
+              moves: rawPuzzle.puzzle.solution.join(" "),
+              themes: rawPuzzle.puzzle.themes
+            };
+          } catch (error) {
+            console.error(`Error loading puzzle ${puzzleId}:`, error);
+            showStatus("Error loading next puzzle, skipping.");
+            setTimeout(loadNextPuzzle, 500);
+            return;
+          }
+        } else {
+          p = nextItem;
+        }
         console.log(p);
         activePuzzle = true;
         puzzleURL = "https://lichess.org/training/" + p.id;
         chess.load(p.fen);
         moveQueue = p.moves.split(" ");
-        startPuzzle(p.fen, moveQueue.shift());
+        if (isStreakPuzzle) {
+          playerColor = getTurnColor(chess.turn());
+          updateGround({ fen: p.fen, orientation: playerColor, events: { move: onUserMove } });
+          ground.setAutoShapes([]);
+        } else {
+          startPuzzle(p.fen, moveQueue.shift());
+        }
         showStatus("", `Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`);
       }
       function startPuzzle(initFen, oppUci) {
@@ -4477,21 +5851,23 @@
         if (uci !== expected && !chess.isGameOver()) {
           showStatus("\u274C Wrong move");
           mistake = true;
+          ground.setAutoShapes([{ orig: to, customSvg: glyphToSvg["\u2717"] }]);
           setTimeout(() => {
             chess.undo();
             updateGround();
+            ground.setAutoShapes([]);
           }, 500);
           return false;
         }
         ground.setAutoShapes([
-          { orig: moveQueue[0].slice(2, 4), customSvg: glyphToSvg["\u2713"] }
+          { orig: to, customSvg: glyphToSvg["\u2713"] }
         ]);
         moveQueue.shift();
         showStatus(moveQueue.length ? "\u2705 Correct, go on!" : "\u2705 Puzzle complete!");
         updateGround({ events: {} });
         if (!moveQueue.length || chess.isGameOver()) {
           activePuzzle = false;
-          showStatus(`\u2705 Puzzle complete! URL: "${puzzleURL}" ${mistake ? "\u274C" : "\u2705"}</a>`);
+          showStatus(`\u2705 Puzzle complete! URL: <a href="${puzzleURL}" target="_blank">${mistake ? "\u274C" : "\u2705"}</a>`);
           setTimeout(() => {
             loadNextPuzzle();
           }, 1e3);

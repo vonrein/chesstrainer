@@ -11,12 +11,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "chessground": "^9.1.1",
-    "chess.js": "^1.0.0",
+    "chess.js": "^1.4.0",
+    "chessground": "^9.2.1",
     "snabbdom": "^0.7.4"
   },
   "devDependencies": {
-    "esbuild": "^0.25.2",
-    "typescript": "^5.8.3"
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2"
   }
 }

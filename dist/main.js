@@ -8,17 +8,17 @@
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/types.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js
   var colors, files, ranks;
   var init_types = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/types.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js"() {
       colors = ["white", "black"];
       files = ["a", "b", "c", "d", "e", "f", "g", "h"];
       ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/util.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js
   function memo(f) {
     let v;
     const ret = () => {
@@ -44,7 +44,7 @@
   }
   var invRanks, allKeys, pos2key, key2pos, allPos, timer, opposite, distanceSq, samePiece, posToTranslate, translate, translateAndScale, setVisible, eventPosition, isRightButton, createEl;
   var init_util = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/util.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js"() {
       init_types();
       invRanks = [...ranks].reverse();
       allKeys = Array.prototype.concat(...files.map((c) => ranks.map((r) => c + r)));
@@ -106,7 +106,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/premove.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js
   function rookFilesOf(pieces, color) {
     const backrank = color === "white" ? "1" : "8";
     const files2 = [];
@@ -126,7 +126,7 @@
   }
   var diff, pawn, knight, bishop, rook, queen, king;
   var init_premove = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/premove.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js"() {
       init_util();
       diff = (a, b) => Math.abs(a - b);
       pawn = (color) => (x1, y1, x2, y2) => diff(x1, x2) < 2 && (color === "white" ? (
@@ -151,7 +151,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/board.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js
   function callUserFunction(f, ...args) {
     if (f)
       setTimeout(() => f(...args), 1);
@@ -445,7 +445,7 @@
   }
   var canMove, whitePov;
   var init_board = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/board.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js"() {
       init_util();
       init_premove();
       canMove = (state, orig, dest) => {
@@ -456,7 +456,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/fen.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js
   function read(fen) {
     if (fen === "start")
       fen = initial;
@@ -512,7 +512,7 @@
   }
   var initial, roles, letters;
   var init_fen = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/fen.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js"() {
       init_util();
       init_types();
       initial = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -535,7 +535,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/config.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js
   function applyAnimation(state, config) {
     if (config.animation) {
       deepMerge(state.animation, config.animation);
@@ -572,12 +572,12 @@
   }
   function deepMerge(base, extend) {
     for (const key in extend) {
-      if (Object.prototype.hasOwnProperty.call(extend, key)) {
-        if (Object.prototype.hasOwnProperty.call(base, key) && isPlainObject(base[key]) && isPlainObject(extend[key]))
-          deepMerge(base[key], extend[key]);
-        else
-          base[key] = extend[key];
-      }
+      if (key === "__proto__" || key === "constructor" || !Object.prototype.hasOwnProperty.call(extend, key))
+        continue;
+      if (Object.prototype.hasOwnProperty.call(base, key) && isPlainObject(base[key]) && isPlainObject(extend[key]))
+        deepMerge(base[key], extend[key]);
+      else
+        base[key] = extend[key];
     }
   }
   function isPlainObject(o) {
@@ -587,13 +587,13 @@
     return proto === Object.prototype || proto === null;
   }
   var init_config = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/config.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js"() {
       init_board();
       init_fen();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/anim.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js
   function render(mutation, state) {
     const result = mutation(state);
     state.dom.redraw();
@@ -677,7 +677,7 @@
   }
   var anim, makePiece, closer, easing;
   var init_anim = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/anim.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js"() {
       init_util();
       anim = (mutation, state) => state.animation.enabled ? animate(mutation, state) : render(mutation, state);
       makePiece = (key, piece) => ({
@@ -690,7 +690,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/draw.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js
   function start(state, e) {
     if (e.touches && e.touches.length > 1)
       return;
@@ -776,14 +776,14 @@
   }
   var brushes;
   var init_draw = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/draw.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js"() {
       init_board();
       init_util();
       brushes = ["green", "red", "blue", "yellow"];
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drag.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js
   function start2(s, e) {
     if (!(s.trustAllEvents || e.isTrusted))
       return;
@@ -970,7 +970,7 @@
     return;
   }
   var init_drag = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drag.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js"() {
       init_board();
       init_util();
       init_draw();
@@ -978,7 +978,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/explosion.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js
   function explosion(state, keys) {
     state.exploding = { stage: 1, keys };
     state.dom.redraw();
@@ -997,11 +997,11 @@
     }
   }
   var init_explosion = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/explosion.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/api.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js
   function start3(state, redrawAll) {
     function toggleOrientation2() {
       toggleOrientation(state);
@@ -1092,7 +1092,7 @@
     };
   }
   var init_api = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/api.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js"() {
       init_board();
       init_fen();
       init_config();
@@ -1102,7 +1102,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/state.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js
   function defaults() {
     return {
       pieces: read(initial),
@@ -1164,7 +1164,9 @@
       events: {},
       drawable: {
         enabled: true,
+        // can draw
         visible: true,
+        // can view
         defaultSnapToValidMove: true,
         eraseOnClick: true,
         shapes: [],
@@ -1193,13 +1195,13 @@
     };
   }
   var init_state = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/state.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js"() {
       init_fen();
       init_util();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/svg.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js
   function createDefs() {
     const defs = createElement("defs");
     const filter = setAttributes(createElement("filter"), { id: "cg-filter-blur" });
@@ -1505,7 +1507,7 @@
   }
   var hilites;
   var init_svg = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/svg.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js"() {
       init_util();
       hilites = {
         hilitePrimary: { key: "hilitePrimary", color: "#3291ff", opacity: 1, lineWidth: 1 },
@@ -1514,7 +1516,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/wrap.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js
   function renderWrap(element, s) {
     element.innerHTML = "";
     element.classList.add("cg-wrap");
@@ -1585,14 +1587,14 @@
     return el;
   }
   var init_wrap = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/wrap.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js"() {
       init_util();
       init_types();
       init_svg();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drop.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js
   function drop(s, e) {
     if (!s.dropmode.active)
       return;
@@ -1609,14 +1611,14 @@
     s.dom.redraw();
   }
   var init_drop = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/drop.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js"() {
       init_board();
       init_util();
       init_drag();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/events.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js
   function bindBoard(s, onResize) {
     const boardEl = s.dom.elements.board;
     if ("ResizeObserver" in window)
@@ -1657,7 +1659,7 @@
   }
   var startDragOrDraw, dragOrDraw;
   var init_events = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/events.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js"() {
       init_drag();
       init_draw();
       init_drop();
@@ -1687,7 +1689,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/render.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js
   function render2(s) {
     const asWhite = whitePov(s), posToTranslate2 = posToTranslate(s.dom.bounds()), boardEl = s.dom.elements.board, pieces = s.pieces, curAnim = s.animation.current, anims = curAnim ? curAnim.plan.anims : /* @__PURE__ */ new Map(), fadings = curAnim ? curAnim.plan.fadings : /* @__PURE__ */ new Map(), curDrag = s.draggable.current, squares = computeSquareClasses(s), samePieces = /* @__PURE__ */ new Set(), sameSquares = /* @__PURE__ */ new Set(), movedPieces = /* @__PURE__ */ new Map(), movedSquares = /* @__PURE__ */ new Map();
     let k, el, pieceAtKey, elPieceName, anim2, fading, pMvdset, pMvd, sMvdset, sMvd;
@@ -1892,7 +1894,7 @@
   }
   var isPieceNode, isSquareNode, pieceNameOf;
   var init_render = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/render.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js"() {
       init_util();
       init_board();
       isPieceNode = (el) => el.tagName === "PIECE";
@@ -1901,7 +1903,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/sync.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js
   function syncShapes2(shapes, root, renderShape3) {
     const hashesInDom = /* @__PURE__ */ new Map(), toRemove = [];
     for (const sc of shapes)
@@ -1923,11 +1925,11 @@
     }
   }
   var init_sync = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/sync.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/autoPieces.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js
   function render3(state, autoPieceEl) {
     const autoPieces = state.drawable.autoShapes.filter((autoShape) => autoShape.piece);
     const autoPieceShapes = autoPieces.map((s) => {
@@ -1963,7 +1965,7 @@
   }
   var hash;
   var init_autoPieces = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/autoPieces.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js"() {
       init_util();
       init_board();
       init_sync();
@@ -1974,7 +1976,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/chessground.js
+  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js
   function Chessground(element, config) {
     const maybeState = defaults();
     configure(maybeState, config || {});
@@ -2024,7 +2026,7 @@
     };
   }
   var init_chessground = __esm({
-    "node_modules/.pnpm/chessground@9.1.1/node_modules/chessground/dist/chessground.js"() {
+    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js"() {
       init_api();
       init_config();
       init_state();
@@ -2053,7 +2055,7 @@
   function randomTheme(container) {
     const styleSheet = document.createElement("style");
     styleSheet.id = "themeStyles";
-    fetch("/random-theme").then((res) => res.json()).then(({ board, pieces }) => {
+    const applyTheme = (board, pieces) => {
       let themeStyle = `.boardtheme cg-board {
       background-image: url("/assets/images/board/${board}");
     } `;
@@ -2061,30 +2063,45 @@
         themeStyle += `
 .piecetheme cg-board piece.${p}.white {
         background-image: url("/assets/images/pieces/${pieces}/w${p[0].toUpperCase()}.svg");
-    }`;
+      }`;
         themeStyle += `
 .piecetheme cg-board piece.${p}.black {
         background-image: url("/assets/images/pieces/${pieces}/b${p[0].toUpperCase()}.svg");
-    }`;
+      }`;
       }
       themeStyle += `
 .piecetheme cg-board piece.knight.white {
-        background-image: url("/assets/images/pieces/${pieces}/wN.svg");
+      background-image: url("/assets/images/pieces/${pieces}/wN.svg");
     }`;
       themeStyle += `
 .piecetheme cg-board piece.knight.black {
-        background-image: url("/assets/images/pieces/${pieces}/bN.svg");
+      background-image: url("/assets/images/pieces/${pieces}/bN.svg");
     }`;
       styleSheet.textContent = themeStyle;
       container.classList.add("boardtheme", "piecetheme");
+    };
+    fetch("/random-theme").then((res) => {
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    }).then(({ board, pieces }) => {
+      applyTheme(board, pieces);
+    }).catch(() => {
+      console.log("Fetching theme from server failed, using local fallback.");
+      const randomBoard = boardThemes[4];
+      const randomPieces = pieceThemes[5];
+      applyTheme(randomBoard, randomPieces);
     });
     return styleSheet;
   }
-  var pieceNames;
+  var pieceNames, boardThemes, pieceThemes;
   var init_randomTheme = __esm({
     "randomTheme.ts"() {
       "use strict";
       pieceNames = ["king", "queen", "rook", "bishop", "pawn"];
+      boardThemes = ["blue-marble.jpg", "blue.svg", "blue2.jpg", "blue3.jpg", "brown.png", "canvas2.jpg", "green-plastic.png", "green.png", "grey.jpg", "ic.png", "leather.jpg", "maple.jpg", "maple2.jpg", "marble.jpg", "metal.jpg", "ncf-board.png", "olive.jpg", "pink-pyramid.png", "purple.png", "wood.jpg", "wood2.jpg", "wood3.jpg", "wood4.jpg", "xboard.png"];
+      pieceThemes = ["alpha", "anarcandy", "caliente", "california", "cardinal", "cburnett", "celtic", "chess7", "chessnut", "companion", "cooke", "dubrovny", "fantasy", "firi", "fresca", "gioco", "governor", "horsey", "icpieces", "kiwen-suwi", "kosal", "leipzig", "letter", "maestro", "merida", "monarchy", "mpchess", "pirouetti", "pixel", "reillycraig", "rhosgfx", "riohacha", "shapes", "spatial", "staunty", "tatiana", "xkcd"];
     }
   });
 
