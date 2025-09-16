@@ -1,54 +1,47 @@
-/*
- * Board
- */
-.blue cg-board {
-  background-image: url("images/board/blue.svg");
+/* Default board theme */
+cg-board {
+  background-image: url("images/board/brown.png");
 }
 
-.merida cg-board piece.pawn.white {
-  background-image: url("images/pieces/merida/wP.svg");
+/* Default piece theme: cburnett */
+.cburnett cg-board piece.pawn.white {
+  background-image: url("images/pieces/cburnett/wP.svg");
+}
+.cburnett cg-board piece.bishop.white {
+  background-image: url("images/pieces/cburnett/wB.svg");
+}
+.cburnett cg-board piece.knight.white {
+  background-image: url("images/pieces/cburnett/wN.svg");
+}
+.cburnett cg-board piece.rook.white {
+  background-image: url("images/pieces/cburnett/wR.svg");
+}
+.cburnett cg-board piece.queen.white {
+  background-image: url("images/pieces/cburnett/wQ.svg");
+}
+.cburnett cg-board piece.king.white {
+  background-image: url("images/pieces/cburnett/wK.svg");
+}
+.cburnett cg-board piece.pawn.black {
+  background-image: url("images/pieces/cburnett/bP.svg");
+}
+.cburnett cg-board piece.bishop.black {
+  background-image: url("images/pieces/cburnett/bB.svg");
+}
+.cburnett cg-board piece.knight.black {
+  background-image: url("images/pieces/cburnett/bN.svg");
+}
+.cburnett cg-board piece.rook.black {
+  background-image: url("images/pieces/cburnett/bR.svg");
+}
+.cburnett cg-board piece.queen.black {
+  background-image: url("images/pieces/cburnett/bQ.svg");
+}
+.cburnett cg-board piece.king.black {
+  background-image: url("images/pieces/cburnett/bK.svg");
 }
 
-.merida cg-board piece.bishop.white {
-  background-image: url("images/pieces/merida/wB.svg");
-}
-
-.merida cg-board piece.knight.white {
-  background-image: url("images/pieces/merida/wN.svg");
-}
-
-.merida cg-board piece.rook.white {
-  background-image: url("images/pieces/merida/wR.svg");
-}
-
-.merida cg-board piece.queen.white {
-  background-image: url("images/pieces/merida/wQ.svg");
-}
-
-.merida cg-board piece.king.white {
-  background-image: url("images/pieces/merida/wK.svg");
-}
-
-.merida cg-board piece.pawn.black {
-  background-image: url("images/pieces/merida/bP.svg");
-}
-
-.merida cg-board piece.bishop.black {
-  background-image: url("images/pieces/merida/bB.svg");
-}
-
-.merida cg-board piece.knight.black {
-  background-image: url("images/pieces/merida/bN.svg");
-}
-
-.merida cg-board piece.rook.black {
-  background-image: url("images/pieces/merida/bR.svg");
-}
-
-.merida cg-board piece.queen.black {
-  background-image: url("images/pieces/merida/bQ.svg");
-}
-
-.merida cg-board piece.king.black {
-  background-image: url("images/pieces/merida/bK.svg");
+/* Add the .merida class to the body or a container element */
+body, .cg-wrap {
+  background-color: #303030; /* Example background */
 }
