@@ -2051,51 +2051,41 @@
     }
   });
 
-  // randomTheme.ts
-  function randomTheme(container) {
+  // theme.ts
+  function applyTheme(container, board = "brown.png", pieces = "cburnett") {
     const styleSheet = document.createElement("style");
     styleSheet.id = "themeStyles";
-    const applyTheme = (board, pieces) => {
-      let themeStyle = `.boardtheme cg-board {
+    let themeStyle = `
+    .boardtheme cg-board {
       background-image: url("/assets/images/board/${board}");
-    } `;
-      for (const p of pieceNames) {
-        themeStyle += `
-.piecetheme cg-board piece.${p}.white {
-        background-image: url("/assets/images/pieces/${pieces}/w${p[0].toUpperCase()}.svg");
-      }`;
-        themeStyle += `
-.piecetheme cg-board piece.${p}.black {
-        background-image: url("/assets/images/pieces/${pieces}/b${p[0].toUpperCase()}.svg");
-      }`;
-      }
+    }
+  `;
+    for (const p of pieceNames) {
+      const pieceInitial = p[0].toUpperCase();
       themeStyle += `
-.piecetheme cg-board piece.knight.white {
+      .piecetheme cg-board piece.${p}.white {
+        background-image: url("/assets/images/pieces/${pieces}/w${pieceInitial}.svg");
+      }
+      .piecetheme cg-board piece.${p}.black {
+        background-image: url("/assets/images/pieces/${pieces}/b${pieceInitial}.svg");
+      }
+    `;
+    }
+    themeStyle += `
+    .piecetheme cg-board piece.knight.white {
       background-image: url("/assets/images/pieces/${pieces}/wN.svg");
-    }`;
-      themeStyle += `
-.piecetheme cg-board piece.knight.black {
+    }
+    .piecetheme cg-board piece.knight.black {
       background-image: url("/assets/images/pieces/${pieces}/bN.svg");
-    }`;
-      styleSheet.textContent = themeStyle;
-      container.classList.add("boardtheme", "piecetheme");
-    };
-    fetch("/random-theme").then((res) => {
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return res.json();
-    }).then(({ board, pieces }) => {
-      applyTheme(board, pieces);
-    }).catch(() => {
-      console.log("Fetching theme from server failed, using local fallback.");
-      applyTheme("brown.png", "cburnett");
-    });
+    }
+  `;
+    styleSheet.textContent = themeStyle;
+    container.classList.add("boardtheme", "piecetheme");
     return styleSheet;
   }
   var pieceNames;
-  var init_randomTheme = __esm({
-    "randomTheme.ts"() {
+  var init_theme = __esm({
+    "theme.ts"() {
       "use strict";
       pieceNames = ["king", "queen", "rook", "bishop", "pawn"];
     }
@@ -2106,7 +2096,7 @@
     "main.ts"() {
       init_chessground();
       init_uiHandles();
-      init_randomTheme();
+      init_theme();
       var container = document.getElementById("board");
       var scoreDisplay = document.getElementById("scoreDisplay");
       var timeDisplay = document.getElementById("timeDisplay");
@@ -2269,7 +2259,7 @@
       });
       currentMode.init(ui);
       startTimer();
-      document.head.appendChild(randomTheme(document.getElementById("board")));
+      document.head.appendChild(applyTheme(document.getElementById("board")));
       var themeChanged = false;
       var flipped = false;
       document.addEventListener("keydown", (e) => {
@@ -2281,7 +2271,7 @@
         if (e.key == "c" && !themeChanged) {
           themeChanged = true;
           document.querySelector("#themeStyles").remove();
-          document.head.appendChild(randomTheme(document.getElementById("board")));
+          document.head.appendChild(applyTheme(document.getElementById("board")));
         }
       });
       document.addEventListener("keyup", (e) => {

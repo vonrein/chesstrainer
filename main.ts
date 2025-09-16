@@ -4,7 +4,7 @@ import { Config as CgConfig} from 'chessground/config'
 import type { Key } from 'chessground/types';
 import type { UiHandles} from './uiHandles';
 import { secondsToMinutes } from './uiHandles';
-import {randomTheme} from "./randomTheme"
+import {applyTheme} from "./theme"
 
 const container = document.getElementById('board')!;
 const scoreDisplay = document.getElementById('scoreDisplay')!;
@@ -204,7 +204,7 @@ startTimer();
 
 
 
-document.head.appendChild(randomTheme(document.getElementById('board')!))
+document.head.appendChild(applyTheme(document.getElementById('board')!))
 
 let themeChanged = false
 let flipped = false
@@ -216,8 +216,8 @@ document.addEventListener("keydown",(e)=>{
   }
 	if(e.key == "c" && !themeChanged){
 		themeChanged = true
-		document.querySelector("#themeStyles").remove()
-		document.head.appendChild(randomTheme(document.getElementById('board')!))
+		document.querySelector("#themeStyles")!.remove()
+		document.head.appendChild(applyTheme(document.getElementById('board')!))
 		
 		
 	}

@@ -8,7 +8,7 @@ import { Config } from 'chessground/config'
 
 import { Key } from 'chessground/types'
 
-import { randomTheme } from './randomTheme'
+import { applyTheme } from './theme'
 
 import { computeDests, getTurnColor, parseUCIMove, promoteAble } from './chessUtils'
 
@@ -509,7 +509,7 @@ jumpBtn.addEventListener('click', () => {
 })
 
 
-document.head.appendChild(randomTheme(container))
+document.head.appendChild(applyTheme(container))
 
 
 let themeChanged = false
@@ -522,7 +522,7 @@ document.addEventListener("keydown", (e) => {
 
     document.querySelector("#themeStyles")!.remove()
 
-    document.head.appendChild(randomTheme(document.getElementById('board')!))
+    document.head.appendChild(applyTheme(document.getElementById('board')!))
 
 
 
