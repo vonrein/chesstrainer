@@ -2097,43 +2097,44 @@
       init_chessground();
       init_uiHandles();
       init_theme();
-      var container = document.getElementById("board");
-      var scoreDisplay = document.getElementById("scoreDisplay");
-      var timeDisplay = document.getElementById("timeDisplay");
-      var rateDisplay = document.getElementById("rateDisplay");
-      var resetBtn = document.getElementById("resetBtn");
-      var toggleOrientationBtn = document.getElementById("toggleOrientationBtn");
-      var coordsOverlay = document.getElementById("coords-overlay");
-      var zoomInBtn = document.getElementById("zoomInBtn");
-      var zoomOutBtn = document.getElementById("zoomOutBtn");
-      var boardWrapper = document.getElementById("board-wrapper");
-      var files2 = "abcdefgh";
-      var ranks2 = "12345678";
-      var orientation = "white";
-      var zoomLevel = 1;
-      var startTime = Date.now();
-      var timerInterval;
-      function getQueryParam(key) {
-        return new URLSearchParams(window.location.search).get(key);
-      }
-      function randomChoice(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-      }
-      var ui = {
-        container,
-        boardWrapper,
-        scoreDisplay,
-        timeDisplay,
-        rateDisplay,
-        updateDisplays: (score, elapsedMs) => {
-          const elapsedSeconds = Math.floor(elapsedMs / 1e3);
-          const rate = elapsedSeconds > 0 ? (score / (elapsedSeconds / 30)).toFixed(2) : "0";
-          scoreDisplay.textContent = `Score: ${score}`;
-          timeDisplay.textContent = `Time: ${secondsToMinutes(elapsedSeconds)}`;
-          rateDisplay.textContent = `Points per half minute: ${rate}`;
-        },
-        updateOverlay: (current, next) => {
-          coordsOverlay.innerHTML = `
+      document.addEventListener("DOMContentLoaded", () => {
+        const container = document.getElementById("board");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const timeDisplay = document.getElementById("timeDisplay");
+        const rateDisplay = document.getElementById("rateDisplay");
+        const resetBtn = document.getElementById("resetBtn");
+        const toggleOrientationBtn = document.getElementById("toggleOrientationBtn");
+        const coordsOverlay = document.getElementById("coords-overlay");
+        const zoomInBtn = document.getElementById("zoomInBtn");
+        const zoomOutBtn = document.getElementById("zoomOutBtn");
+        const boardWrapper = document.getElementById("board-wrapper");
+        const files2 = "abcdefgh";
+        const ranks2 = "12345678";
+        let orientation = "white";
+        let zoomLevel = 1;
+        let startTime = Date.now();
+        let timerInterval;
+        function getQueryParam(key) {
+          return new URLSearchParams(window.location.search).get(key);
+        }
+        function randomChoice(arr) {
+          return arr[Math.floor(Math.random() * arr.length)];
+        }
+        const ui = {
+          container,
+          boardWrapper,
+          scoreDisplay,
+          timeDisplay,
+          rateDisplay,
+          updateDisplays: (score, elapsedMs) => {
+            const elapsedSeconds = Math.floor(elapsedMs / 1e3);
+            const rate = elapsedSeconds > 0 ? (score / (elapsedSeconds / 30)).toFixed(2) : "0";
+            scoreDisplay.textContent = `Score: ${score}`;
+            timeDisplay.textContent = `Time: ${secondsToMinutes(elapsedSeconds)}`;
+            rateDisplay.textContent = `Points per half minute: ${rate}`;
+          },
+          updateOverlay: (current, next) => {
+            coordsOverlay.innerHTML = `
       <svg viewBox="0 0 100 100" class="coords-svg">
         <g class="current">
           <text x="25" y="20">${current}</text>
@@ -2142,141 +2143,142 @@
           <text x="25" y="25">${next}</text>
         </g>
       </svg>`;
-        },
-        zoom: (delta) => {
-          zoomLevel = Math.min(Math.max(zoomLevel + delta, 0.5), 2);
-          boardWrapper.style.transform = `scale(${zoomLevel})`;
-          boardWrapper.style.transformOrigin = "top center";
+          },
+          zoom: (delta) => {
+            zoomLevel = Math.min(Math.max(zoomLevel + delta, 0.5), 2);
+            boardWrapper.style.transform = `scale(${zoomLevel})`;
+            boardWrapper.style.transformOrigin = "top center";
+          }
+        };
+        zoomInBtn.addEventListener("click", () => ui.zoom(0.1));
+        zoomOutBtn.addEventListener("click", () => ui.zoom(-0.1));
+        const config = {
+          orientation,
+          fen: "8/8/8/8/8/8/8/8",
+          coordinates: true,
+          coordinatesOnSquares: false,
+          blockTouchScroll: true,
+          movable: { free: false, color: void 0 },
+          draggable: { enabled: false },
+          selectable: { enabled: false },
+          drawable: { enabled: false },
+          events: {
+            select: (key) => currentMode.handleClick(key, ui)
+          }
+        };
+        let ground = Chessground(container, config);
+        function startTimer() {
+          timerInterval = window.setInterval(() => ui.updateDisplays(currentMode.getScore(), Date.now() - startTime), 1e3);
         }
-      };
-      zoomInBtn.addEventListener("click", () => ui.zoom(0.1));
-      zoomOutBtn.addEventListener("click", () => ui.zoom(-0.1));
-      var config = {
-        orientation,
-        fen: "8/8/8/8/8/8/8/8",
-        coordinates: true,
-        coordinatesOnSquares: false,
-        blockTouchScroll: true,
-        movable: { free: false, color: void 0 },
-        draggable: { enabled: false },
-        selectable: { enabled: false },
-        drawable: { enabled: false },
-        events: {
-          select: (key) => currentMode.handleClick(key, ui)
+        let coordScore = 0;
+        let coordCurrent = "a1";
+        let coordNext = "b2";
+        function randomSquare(exclude) {
+          const squares = [];
+          for (const f of files2) for (const r of ranks2) squares.push(f + r);
+          if (exclude) squares.splice(squares.indexOf(exclude), 1);
+          return randomChoice(squares);
         }
-      };
-      var ground = Chessground(container, config);
-      function startTimer() {
-        timerInterval = window.setInterval(() => ui.updateDisplays(currentMode.getScore(), Date.now() - startTime), 1e3);
-      }
-      var coordScore = 0;
-      var coordCurrent = "a1";
-      var coordNext = "b2";
-      function randomSquare(exclude) {
-        const squares = [];
-        for (const f of files2) for (const r of ranks2) squares.push(f + r);
-        if (exclude) squares.splice(squares.indexOf(exclude), 1);
-        return randomChoice(squares);
-      }
-      var coordinatesMode = {
-        name: "coordinates",
-        init(ui2) {
-          coordScore = 0;
-          coordCurrent = randomSquare();
-          coordNext = randomSquare(coordCurrent);
-          ui2.updateDisplays(coordScore, 0);
-          ui2.updateOverlay(coordCurrent, coordNext);
-        },
-        handleClick(key, ui2) {
-          if (key === coordCurrent) {
-            coordScore++;
-            ui2.updateDisplays(coordScore, Date.now() - startTime);
-            coordCurrent = coordNext;
+        const coordinatesMode = {
+          name: "coordinates",
+          init(ui2) {
+            coordScore = 0;
+            coordCurrent = randomSquare();
             coordNext = randomSquare(coordCurrent);
+            ui2.updateDisplays(coordScore, 0);
             ui2.updateOverlay(coordCurrent, coordNext);
-          } else {
-            console.log("\u274C Wrong!", key);
-          }
-        },
-        reset(ui2) {
-          startTime = Date.now();
-          this.init(ui2);
-        },
-        renderOverlay(ui2) {
-          ui2.updateOverlay(coordCurrent, coordNext);
-        },
-        getScore() {
-          return coordScore;
-        }
-      };
-      var speedList = [];
-      var speedCurrent = "a1";
-      var speedScore = 0;
-      var speedMode = {
-        name: "speed",
-        init(ui2) {
-          speedList = [];
-          for (const f of files2) for (const r of ranks2) speedList.push(f + r);
-          for (let i = speedList.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [speedList[i], speedList[j]] = [speedList[j], speedList[i]];
-          }
-          speedScore = 0;
-          speedCurrent = speedList.shift();
-          ui2.updateDisplays(speedScore, 0);
-          ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
-        },
-        handleClick(key, ui2) {
-          if (key === speedCurrent) {
-            speedScore++;
-            ui2.updateDisplays(speedScore, Date.now() - startTime);
-            if (speedList.length === 0) {
-              alert(`\u2705 Done! Time: ${((Date.now() - startTime) / 1e3).toFixed(1)}s`);
-              this.reset(ui2);
-              return;
+          },
+          handleClick(key, ui2) {
+            if (key === coordCurrent) {
+              coordScore++;
+              ui2.updateDisplays(coordScore, Date.now() - startTime);
+              coordCurrent = coordNext;
+              coordNext = randomSquare(coordCurrent);
+              ui2.updateOverlay(coordCurrent, coordNext);
+            } else {
+              console.log("\u274C Wrong!", key);
             }
-            speedCurrent = speedList.shift();
-            ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
+          },
+          reset(ui2) {
+            startTime = Date.now();
+            this.init(ui2);
+          },
+          renderOverlay(ui2) {
+            ui2.updateOverlay(coordCurrent, coordNext);
+          },
+          getScore() {
+            return coordScore;
           }
-        },
-        reset(ui2) {
-          startTime = Date.now();
-          this.init(ui2);
-        },
-        renderOverlay(ui2) {
-          ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
-        },
-        getScore() {
-          return speedScore;
-        }
-      };
-      var selectedMode = getQueryParam("mode") || "coordinates";
-      var currentMode = selectedMode === "speed" ? speedMode : coordinatesMode;
-      resetBtn.addEventListener("click", () => currentMode.reset(ui));
-      toggleOrientationBtn.addEventListener("click", () => {
-        orientation = orientation === "white" ? "black" : "white";
-        ground.set({ orientation });
-      });
-      currentMode.init(ui);
-      startTimer();
-      document.head.appendChild(applyTheme(document.getElementById("board")));
-      var themeChanged = false;
-      var flipped = false;
-      document.addEventListener("keydown", (e) => {
-        if (e.key == "f" && !flipped) {
-          flipped = false;
+        };
+        let speedList = [];
+        let speedCurrent = "a1";
+        let speedScore = 0;
+        const speedMode = {
+          name: "speed",
+          init(ui2) {
+            speedList = [];
+            for (const f of files2) for (const r of ranks2) speedList.push(f + r);
+            for (let i = speedList.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [speedList[i], speedList[j]] = [speedList[j], speedList[i]];
+            }
+            speedScore = 0;
+            speedCurrent = speedList.shift();
+            ui2.updateDisplays(speedScore, 0);
+            ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
+          },
+          handleClick(key, ui2) {
+            if (key === speedCurrent) {
+              speedScore++;
+              ui2.updateDisplays(speedScore, Date.now() - startTime);
+              if (speedList.length === 0) {
+                alert(`\u2705 Done! Time: ${((Date.now() - startTime) / 1e3).toFixed(1)}s`);
+                this.reset(ui2);
+                return;
+              }
+              speedCurrent = speedList.shift();
+              ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
+            }
+          },
+          reset(ui2) {
+            startTime = Date.now();
+            this.init(ui2);
+          },
+          renderOverlay(ui2) {
+            ui2.updateOverlay(speedCurrent, speedList[0] ?? "");
+          },
+          getScore() {
+            return speedScore;
+          }
+        };
+        const selectedMode = getQueryParam("mode") || "coordinates";
+        const currentMode = selectedMode === "speed" ? speedMode : coordinatesMode;
+        resetBtn.addEventListener("click", () => currentMode.reset(ui));
+        toggleOrientationBtn.addEventListener("click", () => {
           orientation = orientation === "white" ? "black" : "white";
           ground.set({ orientation });
-        }
-        if (e.key == "c" && !themeChanged) {
-          themeChanged = true;
-          document.querySelector("#themeStyles").remove();
-          document.head.appendChild(applyTheme(document.getElementById("board")));
-        }
-      });
-      document.addEventListener("keyup", (e) => {
-        flipped = false;
-        themeChanged = false;
+        });
+        currentMode.init(ui);
+        startTimer();
+        document.head.appendChild(applyTheme(document.getElementById("board")));
+        let themeChanged = false;
+        let flipped = false;
+        document.addEventListener("keydown", (e) => {
+          if (e.key == "f" && !flipped) {
+            flipped = false;
+            orientation = orientation === "white" ? "black" : "white";
+            ground.set({ orientation });
+          }
+          if (e.key == "c" && !themeChanged) {
+            themeChanged = true;
+            document.querySelector("#themeStyles").remove();
+            document.head.appendChild(applyTheme(document.getElementById("board")));
+          }
+        });
+        document.addEventListener("keyup", (e) => {
+          flipped = false;
+          themeChanged = false;
+        });
       });
     }
   });
