@@ -5572,26 +5572,26 @@
     styleSheet.id = "themeStyles";
     let themeStyle = `
     .boardtheme cg-board {
-      background-image: url("/assets/images/board/${board}");
+      background-image: url("assets/images/board/${board}");
     }
   `;
     for (const p of pieceNames) {
       const pieceInitial = p[0].toUpperCase();
       themeStyle += `
       .piecetheme cg-board piece.${p}.white {
-        background-image: url("/assets/images/pieces/${pieces}/w${pieceInitial}.svg");
+        background-image: url("assets/images/pieces/${pieces}/w${pieceInitial}.svg");
       }
       .piecetheme cg-board piece.${p}.black {
-        background-image: url("/assets/images/pieces/${pieces}/b${pieceInitial}.svg");
+        background-image: url("assets/images/pieces/${pieces}/b${pieceInitial}.svg");
       }
     `;
     }
     themeStyle += `
     .piecetheme cg-board piece.knight.white {
-      background-image: url("/assets/images/pieces/${pieces}/wN.svg");
+      background-image: url("assets/images/pieces/${pieces}/wN.svg");
     }
     .piecetheme cg-board piece.knight.black {
-      background-image: url("/assets/images/pieces/${pieces}/bN.svg");
+      background-image: url("assets/images/pieces/${pieces}/bN.svg");
     }
   `;
     styleSheet.textContent = themeStyle;

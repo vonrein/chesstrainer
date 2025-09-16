@@ -22,7 +22,7 @@ export function applyTheme(
 
   let themeStyle = `
     .boardtheme cg-board {
-      background-image: url("/assets/images/board/${board}");
+      background-image: url("assets/images/board/${board}");
     }
   `;
 
@@ -31,10 +31,10 @@ export function applyTheme(
     const pieceInitial = p[0].toUpperCase();
     themeStyle += `
       .piecetheme cg-board piece.${p}.white {
-        background-image: url("/assets/images/pieces/${pieces}/w${pieceInitial}.svg");
+        background-image: url("assets/images/pieces/${pieces}/w${pieceInitial}.svg");
       }
       .piecetheme cg-board piece.${p}.black {
-        background-image: url("/assets/images/pieces/${pieces}/b${pieceInitial}.svg");
+        background-image: url("assets/images/pieces/${pieces}/b${pieceInitial}.svg");
       }
     `;
   }
@@ -42,10 +42,10 @@ export function applyTheme(
   // Add specific rules for the knight
   themeStyle += `
     .piecetheme cg-board piece.knight.white {
-      background-image: url("/assets/images/pieces/${pieces}/wN.svg");
+      background-image: url("assets/images/pieces/${pieces}/wN.svg");
     }
     .piecetheme cg-board piece.knight.black {
-      background-image: url("/assets/images/pieces/${pieces}/bN.svg");
+      background-image: url("assets/images/pieces/${pieces}/bN.svg");
     }
   `;
 
