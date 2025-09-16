@@ -45,9 +45,7 @@ export function randomTheme(container: HTMLElement) {
   })
   .catch(() => {
     console.log("Fetching theme from server failed, using local fallback.");
-    const randomBoard = boardThemes[4];
-    const randomPieces = pieceThemes[5];
-    applyTheme(randomBoard, randomPieces);
+    applyTheme("brown.png", "cburnett");
   });
 
   return styleSheet;

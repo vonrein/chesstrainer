@@ -5604,19 +5604,15 @@
       applyTheme(board, pieces);
     }).catch(() => {
       console.log("Fetching theme from server failed, using local fallback.");
-      const randomBoard = boardThemes[4];
-      const randomPieces = pieceThemes[5];
-      applyTheme(randomBoard, randomPieces);
+      applyTheme("brown.png", "cburnett");
     });
     return styleSheet;
   }
-  var pieceNames, boardThemes, pieceThemes;
+  var pieceNames;
   var init_randomTheme = __esm({
     "randomTheme.ts"() {
       "use strict";
       pieceNames = ["king", "queen", "rook", "bishop", "pawn"];
-      boardThemes = ["blue-marble.jpg", "blue.svg", "blue2.jpg", "blue3.jpg", "brown.png", "canvas2.jpg", "green-plastic.png", "green.png", "grey.jpg", "ic.png", "leather.jpg", "maple.jpg", "maple2.jpg", "marble.jpg", "metal.jpg", "ncf-board.png", "olive.jpg", "pink-pyramid.png", "purple.png", "wood.jpg", "wood2.jpg", "wood3.jpg", "wood4.jpg", "xboard.png"];
-      pieceThemes = ["alpha", "anarcandy", "caliente", "california", "cardinal", "cburnett", "celtic", "chess7", "chessnut", "companion", "cooke", "dubrovny", "fantasy", "firi", "fresca", "gioco", "governor", "horsey", "icpieces", "kiwen-suwi", "kosal", "leipzig", "letter", "maestro", "merida", "monarchy", "mpchess", "pirouetti", "pixel", "reillycraig", "rhosgfx", "riohacha", "shapes", "spatial", "staunty", "tatiana", "xkcd"];
     }
   });
 
