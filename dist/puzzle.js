@@ -5681,6 +5681,7 @@
         let allPuzzles = [];
         let puzzleQueue = [];
         let mistake = false;
+        let totalPuzzleCount = 0;
         const composeGlyph = (fill, path) => `<defs><filter id="shadow"><feDropShadow dx="4" dy="7" stdDeviation="5" flood-opacity="0.5" /></filter></defs><g transform="translate(71 -12) scale(0.4)"><circle style="fill:${fill};filter:url(#shadow)" cx="50" cy="50" r="50" />${path}</g>`;
         const goodmoveSVG = `<path fill="#fff" d="M87 32.8q0 2-1.4 3.2L51 70.6 44.6 77q-1.7 1.3-3.4 1.3-1.8 0-3.1-1.3L14.3 53.3Q13 52 13 50q0-2 1.3-3.2l6.4-6.5Q22.4 39 24 39q1.9 0 3.2 1.3l14 14L72.7 23q1.3-1.3 3.2-1.3 1.6 0 3.3 1.3l6.4 6.5q1.3 1.4 1.3 3.4z"/>`;
         const wrongMoveSVG = `    '<path fill="#fff" d="M79.4 68q0 1.8-1.4 3.2l-6.7 6.7q-1.4 1.4-3.5 1.4-1.9 0-3.3-1.4L50 63.4 35.5 78q-1.4 1.4-3.3 1.4-2 0-3.5-1.4L22 71.2q-1.4-1.4-1.4-3.3 0-1.7 1.4-3.5L36.5 50 22 35.4Q20.6 34 20.6 32q0-1.7 1.4-3.5l6.7-6.5q1.2-1.4 3.5-1.4 2 0 3.3 1.4L50 36.6 64.5 22q1.2-1.4 3.3-1.4 2.3 0 3.5 1.4l6.7 6.5q1.4 1.8 1.4 3.5 0 2-1.4 3.3L63.5 49.9 78 64.4q1.4 1.8 1.4 3.5z"/>'`;
@@ -5739,7 +5740,6 @@
             const response = await fetch(puzzleSourceURL);
             const data = await response.json();
             let puzzles = [];
-            let initialPuzzleCount;
             if (source === "storm") {
               puzzles = data.puzzles.map((p) => ({
                 id: p.id,
@@ -5748,7 +5748,6 @@
                 moves: p.line,
                 themes: p.themes || []
               }));
-              initialPuzzleCount = puzzles.length;
             } else if (source === "streak") {
               const streakIds = data.streak.split(" ");
               if (!streakIds.length) {
@@ -5756,20 +5755,19 @@
                 return;
               }
               puzzles = streakIds;
-              initialPuzzleCount = streakIds.length;
             } else {
               puzzles = data;
-              initialPuzzleCount = puzzles.length;
             }
             if (!puzzles.length) {
               showStatus("No puzzles found!");
               return;
             }
             allPuzzles = puzzles;
+            totalPuzzleCount = allPuzzles.length;
             puzzleQueue = [...allPuzzles];
             jumpToPuzzleContainer.style.display = "inline-block";
-            jumpToPuzzleInput.max = allPuzzles.length.toString();
-            showStatus("", `${initialPuzzleCount} puzzles loaded.`);
+            jumpToPuzzleInput.max = totalPuzzleCount.toString();
+            showStatus("", `${totalPuzzleCount} puzzles loaded.`);
             loadNextPuzzle();
           } catch (error) {
             console.error("Error loading puzzles:", error);
@@ -5778,7 +5776,7 @@
         }
         function jumpToPuzzle() {
           const puzzleNumber = parseInt(jumpToPuzzleInput.value, 10);
-          if (isNaN(puzzleNumber) || puzzleNumber < 1 || puzzleNumber > allPuzzles.length) {
+          if (isNaN(puzzleNumber) || puzzleNumber < 1 || puzzleNumber > totalPuzzleCount) {
             showStatus("Invalid puzzle number!");
             return;
           }
@@ -5794,10 +5792,12 @@
           let nextItem = puzzleQueue.shift();
           let p;
           let isStreakPuzzle = false;
+          const currentLevel = totalPuzzleCount - puzzleQueue.length;
+          jumpToPuzzleInput.value = currentLevel + 1;
           if (typeof nextItem === "string") {
             isStreakPuzzle = true;
             const puzzleId = nextItem;
-            showStatus("", `Loading puzzle ${puzzleId}... (${puzzleQueue.length} left)`);
+            showStatus("", `Loading puzzle ${puzzleId}... (Level: ${currentLevel}/${totalPuzzleCount})`);
             try {
               const response = await fetch(`https://lichess.org/api/puzzle/${puzzleId}`);
               if (!response.ok) {
@@ -5835,7 +5835,7 @@
           } else {
             startPuzzle(p.fen, moveQueue.shift());
           }
-          showStatus("", `Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`);
+          showStatus("", `Puzzle rating: ${p.rating} (Level: ${currentLevel}/${totalPuzzleCount})`);
         }
         function startPuzzle(initFen, oppMove) {
           chess.load(initFen);

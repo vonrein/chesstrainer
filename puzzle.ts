@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let allPuzzles: any[] = [];
   let puzzleQueue: any[] = []
   let mistake = false
+  let totalPuzzleCount = 0; // <-- ADDED: To store the total number of puzzles
 
   const composeGlyph = (fill: string, path: string) =>
     `<defs><filter id="shadow"><feDropShadow dx="4" dy="7" stdDeviation="5" flood-opacity="0.5" /></filter></defs><g transform="translate(71 -12) scale(0.4)"><circle style="fill:${fill};filter:url(#shadow)" cx="50" cy="50" r="50" />${path}</g>`;
@@ -112,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(puzzleSourceURL);
       const data = await response.json();
       let puzzles: any[] = [];
-      let initialPuzzleCount: number;
 
       if (source === "storm") {
         puzzles = data.puzzles.map((p: any) => ({
@@ -122,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
           moves: p.line,
           themes: p.themes || []
         }));
-        initialPuzzleCount = puzzles.length;
       } else if (source === "streak") {
         const streakIds = data.streak.split(" ");
         if (!streakIds.length) {
@@ -130,22 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         puzzles = streakIds;
-        initialPuzzleCount = streakIds.length;
       } else {
         puzzles = data;
-        initialPuzzleCount = puzzles.length;
       }
-
+      
       if (!puzzles.length) {
         showStatus("No puzzles found!");
         return;
       }
 
       allPuzzles = puzzles;
+      totalPuzzleCount = allPuzzles.length; // <-- ADDED: Set total puzzle count
       puzzleQueue = [...allPuzzles];
       jumpToPuzzleContainer.style.display = 'inline-block';
-      jumpToPuzzleInput.max = allPuzzles.length.toString();
-      showStatus("", `${initialPuzzleCount} puzzles loaded.`);
+      jumpToPuzzleInput.max = totalPuzzleCount.toString(); // <-- UPDATED: Use new variable
+      showStatus("", `${totalPuzzleCount} puzzles loaded.`); // <-- UPDATED: Use new variable
       loadNextPuzzle();
     } catch (error) {
       console.error("Error loading puzzles:", error);
@@ -155,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function jumpToPuzzle() {
     const puzzleNumber = parseInt(jumpToPuzzleInput.value, 10);
-    if (isNaN(puzzleNumber) || puzzleNumber < 1 || puzzleNumber > allPuzzles.length) {
+    if (isNaN(puzzleNumber) || puzzleNumber < 1 || puzzleNumber > totalPuzzleCount) { // <-- UPDATED: Use totalPuzzleCount
       showStatus("Invalid puzzle number!");
       return;
     }
@@ -173,11 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let nextItem = puzzleQueue.shift();
     let p;
     let isStreakPuzzle = false;
+    // <-- ADDED: Calculate current level number
+    const currentLevel = totalPuzzleCount - puzzleQueue.length;
+    jumpToPuzzleInput.value = currentLevel + 1;
 
     if (typeof nextItem === "string") {
       isStreakPuzzle = true;
       const puzzleId = nextItem;
-      showStatus("", `Loading puzzle ${puzzleId}... (${puzzleQueue.length} left)`);
+      // <-- UPDATED: Show status with Level
+      showStatus("", `Loading puzzle ${puzzleId}... (Level: ${currentLevel}/${totalPuzzleCount})`);
 
       try {
         const response = await fetch(`https://lichess.org/api/puzzle/${puzzleId}`);
@@ -220,7 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
       startPuzzle(p.fen, moveQueue.shift()!);
     }
 
-    showStatus("", `Puzzle rating: ${p.rating} (${puzzleQueue.length} left)`);
+    // <-- UPDATED: Show status with Level
+    showStatus("", `Puzzle rating: ${p.rating} (Level: ${currentLevel}/${totalPuzzleCount})`);
   }
 
   function startPuzzle(initFen: string, oppMove: any) {
