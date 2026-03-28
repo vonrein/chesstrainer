@@ -173,6 +173,11 @@ cg-board piece.fading {
   z-index: 9;
 }
 
+.cg-wrap .cg-shapes-below,
+.cg-wrap .cg-custom-below {
+  display:none;
+}
+
 .cg-wrap coords {
   position: absolute;
   display: flex;

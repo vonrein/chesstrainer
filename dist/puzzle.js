@@ -4,8 +4,8 @@
   var __esm = (fn, res) => function __init() {
     return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
   };
-  var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  var __commonJS = (cb, mod2) => function __require() {
+    return mod2 || (0, cb[__getOwnPropNames(cb)[0]])((mod2 = { exports: {} }).exports, mod2), mod2.exports;
   };
 
   // node_modules/.pnpm/chess.js@1.4.0/node_modules/chess.js/dist/esm/chess.js
@@ -3535,17 +3535,17 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/types.js
   var colors, files, ranks;
   var init_types = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/types.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/types.js"() {
       colors = ["white", "black"];
       files = ["a", "b", "c", "d", "e", "f", "g", "h"];
       ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/util.js
   function memo(f) {
     let v;
     const ret = () => {
@@ -3569,15 +3569,17 @@
       bounds.top + bounds.height * (7 - pos[1]) / 8 + bounds.height / 16
     ];
   }
-  var invRanks, allKeys, pos2key, key2pos, allPos, timer, opposite, distanceSq, samePiece, posToTranslate, translate, translateAndScale, setVisible, eventPosition, isRightButton, createEl;
+  var invRanks, allKeys, pos2key, pos2keyUnsafe, key2pos, allPos, allPosAndKey, timer, opposite, distanceSq, samePiece, samePos, posToTranslate, translate, translateAndScale, setVisible, eventPosition, isFireMac, isRightButton, createEl, diff, knightDir, rookDir, bishopDir, queenDir, kingDirNonCastling, pawnDirAdvance, squaresBetween;
   var init_util = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/util.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/util.js"() {
       init_types();
       invRanks = [...ranks].reverse();
-      allKeys = Array.prototype.concat(...files.map((c) => ranks.map((r) => c + r)));
-      pos2key = (pos) => allKeys[8 * pos[0] + pos[1]];
+      allKeys = files.flatMap((f) => ranks.map((r) => f + r));
+      pos2key = (pos) => pos.every((x) => x >= 0 && x <= 7) ? allKeys[8 * pos[0] + pos[1]] : void 0;
+      pos2keyUnsafe = (pos) => pos2key(pos);
       key2pos = (k) => [k.charCodeAt(0) - 97, k.charCodeAt(1) - 49];
       allPos = allKeys.map(key2pos);
+      allPosAndKey = allKeys.map((key, i) => ({ key, pos: allPos[i] }));
       timer = () => {
         let startAt;
         return {
@@ -3597,11 +3599,9 @@
         };
       };
       opposite = (c) => c === "white" ? "black" : "white";
-      distanceSq = (pos1, pos2) => {
-        const dx = pos1[0] - pos2[0], dy = pos1[1] - pos2[1];
-        return dx * dx + dy * dy;
-      };
+      distanceSq = (pos1, pos2) => (pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2;
       samePiece = (p1, p2) => p1.role === p2.role && p1.color === p2.color;
+      samePos = (p1, p2) => p1[0] === p2[0] && p1[1] === p2[1];
       posToTranslate = (bounds) => (pos, asWhite) => [
         (asWhite ? pos[0] : 7 - pos[0]) * bounds.width / 8,
         (asWhite ? 7 - pos[1] : pos[1]) * bounds.height / 8
@@ -3616,69 +3616,82 @@
         el.style.visibility = v ? "visible" : "hidden";
       };
       eventPosition = (e) => {
-        var _a;
         if (e.clientX || e.clientX === 0)
           return [e.clientX, e.clientY];
-        if ((_a = e.targetTouches) === null || _a === void 0 ? void 0 : _a[0])
+        if (e.targetTouches?.[0])
           return [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
         return;
       };
-      isRightButton = (e) => e.button === 2;
+      isFireMac = memo(() => !("ontouchstart" in window) && ["macintosh", "firefox"].every((x) => navigator.userAgent.toLowerCase().includes(x)));
+      isRightButton = (e) => e.button === 2 && !(e.ctrlKey && isFireMac());
       createEl = (tagName, className) => {
         const el = document.createElement(tagName);
         if (className)
           el.className = className;
         return el;
       };
-    }
-  });
-
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js
-  function rookFilesOf(pieces, color) {
-    const backrank = color === "white" ? "1" : "8";
-    const files2 = [];
-    for (const [key, piece] of pieces) {
-      if (key[1] === backrank && piece.color === color && piece.role === "rook") {
-        files2.push(key2pos(key)[0]);
-      }
-    }
-    return files2;
-  }
-  function premove(pieces, key, canCastle) {
-    const piece = pieces.get(key);
-    if (!piece)
-      return [];
-    const pos = key2pos(key), r = piece.role, mobility = r === "pawn" ? pawn(piece.color) : r === "knight" ? knight : r === "bishop" ? bishop : r === "rook" ? rook : r === "queen" ? queen : king(piece.color, rookFilesOf(pieces, piece.color), canCastle);
-    return allPos.filter((pos2) => (pos[0] !== pos2[0] || pos[1] !== pos2[1]) && mobility(pos[0], pos[1], pos2[0], pos2[1])).map(pos2key);
-  }
-  var diff, pawn, knight, bishop, rook, queen, king;
-  var init_premove = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/premove.js"() {
-      init_util();
       diff = (a, b) => Math.abs(a - b);
-      pawn = (color) => (x1, y1, x2, y2) => diff(x1, x2) < 2 && (color === "white" ? (
-        // allow 2 squares from first two ranks, for horde
-        y2 === y1 + 1 || y1 <= 1 && y2 === y1 + 2 && x1 === x2
-      ) : y2 === y1 - 1 || y1 >= 6 && y2 === y1 - 2 && x1 === x2);
-      knight = (x1, y1, x2, y2) => {
-        const xd = diff(x1, x2);
-        const yd = diff(y1, y2);
-        return xd === 1 && yd === 2 || xd === 2 && yd === 1;
+      knightDir = (x1, y1, x2, y2) => diff(x1, x2) * diff(y1, y2) === 2;
+      rookDir = (x1, y1, x2, y2) => x1 === x2 !== (y1 === y2);
+      bishopDir = (x1, y1, x2, y2) => diff(x1, x2) === diff(y1, y2) && x1 !== x2;
+      queenDir = (x1, y1, x2, y2) => rookDir(x1, y1, x2, y2) || bishopDir(x1, y1, x2, y2);
+      kingDirNonCastling = (x1, y1, x2, y2) => Math.max(diff(x1, x2), diff(y1, y2)) === 1;
+      pawnDirAdvance = (x1, y1, x2, y2, isDirectionUp) => {
+        const step2 = isDirectionUp ? 1 : -1;
+        return x1 === x2 && (y2 === y1 + step2 || // allow 2 squares from first two ranks, for horde
+        y2 === y1 + 2 * step2 && (isDirectionUp ? y1 <= 1 : y1 >= 6));
       };
-      bishop = (x1, y1, x2, y2) => {
-        return diff(x1, x2) === diff(y1, y2);
+      squaresBetween = (x1, y1, x2, y2) => {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        if (dx && dy && Math.abs(dx) !== Math.abs(dy))
+          return [];
+        const stepX = Math.sign(dx), stepY = Math.sign(dy);
+        const squares = [];
+        let x = x1 + stepX, y = y1 + stepY;
+        while (x !== x2 || y !== y2) {
+          squares.push([x, y]);
+          x += stepX;
+          y += stepY;
+        }
+        return squares.map(pos2key).filter((k) => k !== void 0);
       };
-      rook = (x1, y1, x2, y2) => {
-        return x1 === x2 || y1 === y2;
-      };
-      queen = (x1, y1, x2, y2) => {
-        return bishop(x1, y1, x2, y2) || rook(x1, y1, x2, y2);
-      };
-      king = (color, rookFiles, canCastle) => (x1, y1, x2, y2) => diff(x1, x2) < 2 && diff(y1, y2) < 2 || canCastle && y1 === y2 && y1 === (color === "white" ? 0 : 7) && (x1 === 4 && (x2 === 2 && rookFiles.includes(0) || x2 === 6 && rookFiles.includes(7)) || rookFiles.includes(x2));
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/premove.js
+  function premove(state, key) {
+    const pieces = state.pieces;
+    const piece = pieces.get(key);
+    if (!piece || piece.color === state.turnColor)
+      return [];
+    const color = piece.color, friendlies = new Map([...pieces].filter(([_, p]) => p.color === color)), enemies = new Map([...pieces].filter(([_, p]) => p.color === opposite(color))), orig = { key, pos: key2pos(key) }, mobility = (ctx) => mobilityByRole[piece.role](ctx) && state.premovable.additionalPremoveRequirements(ctx), partialCtx = {
+      orig,
+      role: piece.role,
+      allPieces: pieces,
+      friendlies,
+      enemies,
+      color,
+      rookFilesFriendlies: Array.from(pieces).filter(([k, p]) => k[1] === (color === "white" ? "1" : "8") && p.color === color && p.role === "rook").map(([k]) => key2pos(k)[0]),
+      lastMove: state.lastMove
+    };
+    return allPosAndKey.filter((dest) => mobility({ ...partialCtx, dest })).map((pk) => pk.key);
+  }
+  var pawn, knight, bishop, rook, queen, king, mobilityByRole;
+  var init_premove = __esm({
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/premove.js"() {
+      init_util();
+      pawn = (ctx) => diff(ctx.orig.pos[0], ctx.dest.pos[0]) <= 1 && (diff(ctx.orig.pos[0], ctx.dest.pos[0]) === 1 ? ctx.dest.pos[1] === ctx.orig.pos[1] + (ctx.color === "white" ? 1 : -1) : pawnDirAdvance(...ctx.orig.pos, ...ctx.dest.pos, ctx.color === "white"));
+      knight = (ctx) => knightDir(...ctx.orig.pos, ...ctx.dest.pos);
+      bishop = (ctx) => bishopDir(...ctx.orig.pos, ...ctx.dest.pos);
+      rook = (ctx) => rookDir(...ctx.orig.pos, ...ctx.dest.pos);
+      queen = (ctx) => bishop(ctx) || rook(ctx);
+      king = (ctx) => kingDirNonCastling(...ctx.orig.pos, ...ctx.dest.pos) || ctx.orig.pos[1] === ctx.dest.pos[1] && ctx.orig.pos[1] === (ctx.color === "white" ? 0 : 7) && (ctx.orig.pos[0] === 4 && (ctx.dest.pos[0] === 2 && ctx.rookFilesFriendlies.includes(0) || ctx.dest.pos[0] === 6 && ctx.rookFilesFriendlies.includes(7)) || ctx.rookFilesFriendlies.includes(ctx.dest.pos[0]));
+      mobilityByRole = { pawn, knight, bishop, rook, queen, king };
+    }
+  });
+
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/board.js
   function callUserFunction(f, ...args) {
     if (f)
       setTimeout(() => f(...args), 1);
@@ -3741,9 +3754,9 @@
       return false;
     if (origPos[0] === 4 && !state.pieces.has(dest)) {
       if (destPos[0] === 6)
-        dest = pos2key([7, destPos[1]]);
+        dest = pos2keyUnsafe([7, destPos[1]]);
       else if (destPos[0] === 2)
-        dest = pos2key([0, destPos[1]]);
+        dest = pos2keyUnsafe([0, destPos[1]]);
     }
     const rook2 = state.pieces.get(dest);
     if (!rook2 || rook2.color !== king2.color || rook2.role !== "rook")
@@ -3751,11 +3764,11 @@
     state.pieces.delete(orig);
     state.pieces.delete(dest);
     if (origPos[0] < destPos[0]) {
-      state.pieces.set(pos2key([6, destPos[1]]), king2);
-      state.pieces.set(pos2key([5, destPos[1]]), rook2);
+      state.pieces.set(pos2keyUnsafe([6, destPos[1]]), king2);
+      state.pieces.set(pos2keyUnsafe([5, destPos[1]]), rook2);
     } else {
-      state.pieces.set(pos2key([2, destPos[1]]), king2);
-      state.pieces.set(pos2key([3, destPos[1]]), rook2);
+      state.pieces.set(pos2keyUnsafe([2, destPos[1]]), king2);
+      state.pieces.set(pos2keyUnsafe([3, destPos[1]]), rook2);
     }
     return true;
   }
@@ -3866,12 +3879,10 @@
   }
   function setSelected(state, key) {
     state.selected = key;
-    if (isPremovable(state, key)) {
-      if (!state.premovable.customDests) {
-        state.premovable.dests = premove(state.pieces, key, state.premovable.castle);
-      }
-    } else
+    if (!isPremovable(state, key))
       state.premovable.dests = void 0;
+    else if (!state.premovable.customDests)
+      state.premovable.dests = premove(state, key);
   }
   function unselect(state) {
     state.selected = void 0;
@@ -3889,11 +3900,6 @@
   function isPremovable(state, orig) {
     const piece = state.pieces.get(orig);
     return !!piece && state.premovable.enabled && state.movable.color === piece.color && state.turnColor !== piece.color;
-  }
-  function canPremove(state, orig, dest) {
-    var _a, _b;
-    const validPremoves = (_b = (_a = state.premovable.customDests) === null || _a === void 0 ? void 0 : _a.get(orig)) !== null && _b !== void 0 ? _b : premove(state.pieces, orig, state.premovable.castle);
-    return orig !== dest && isPremovable(state, orig) && validPremoves.includes(dest);
   }
   function canPredrop(state, orig, dest) {
     const piece = state.pieces.get(orig);
@@ -3964,26 +3970,24 @@
   }
   function getSnappedKeyAtDomPos(orig, pos, asWhite, bounds) {
     const origPos = key2pos(orig);
-    const validSnapPos = allPos.filter((pos2) => queen(origPos[0], origPos[1], pos2[0], pos2[1]) || knight(origPos[0], origPos[1], pos2[0], pos2[1]));
-    const validSnapCenters = validSnapPos.map((pos2) => computeSquareCenter(pos2key(pos2), asWhite, bounds));
+    const validSnapPos = allPos.filter((pos2) => samePos(origPos, pos2) || queenDir(origPos[0], origPos[1], pos2[0], pos2[1]) || knightDir(origPos[0], origPos[1], pos2[0], pos2[1]));
+    const validSnapCenters = validSnapPos.map((pos2) => computeSquareCenter(pos2keyUnsafe(pos2), asWhite, bounds));
     const validSnapDistances = validSnapCenters.map((pos2) => distanceSq(pos, pos2));
     const [, closestSnapIndex] = validSnapDistances.reduce((a, b, index) => a[0] < b ? a : [b, index], [validSnapDistances[0], 0]);
     return pos2key(validSnapPos[closestSnapIndex]);
   }
-  var canMove, whitePov;
+  var canMove, canPremove, whitePov;
   var init_board = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/board.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/board.js"() {
       init_util();
       init_premove();
-      canMove = (state, orig, dest) => {
-        var _a, _b;
-        return orig !== dest && isMovable(state, orig) && (state.movable.free || !!((_b = (_a = state.movable.dests) === null || _a === void 0 ? void 0 : _a.get(orig)) === null || _b === void 0 ? void 0 : _b.includes(dest)));
-      };
+      canMove = (state, orig, dest) => orig !== dest && isMovable(state, orig) && (state.movable.free || !!state.movable.dests?.get(orig)?.includes(dest));
+      canPremove = (state, orig, dest) => orig !== dest && isPremovable(state, orig) && (state.premovable.customDests?.get(orig) ?? premove(state, orig)).includes(dest);
       whitePov = (s) => s.orientation === "white";
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/fen.js
   function read(fen) {
     if (fen === "start")
       fen = initial;
@@ -4001,7 +4005,8 @@
           col = 0;
           break;
         case "~": {
-          const piece = pieces.get(pos2key([col - 1, row]));
+          const k = pos2key([col - 1, row]);
+          const piece = k && pieces.get(k);
           if (piece)
             piece.promoted = true;
           break;
@@ -4012,10 +4017,12 @@
             col += nb - 48;
           else {
             const role = c.toLowerCase();
-            pieces.set(pos2key([col, row]), {
-              role: roles[role],
-              color: c === role ? "black" : "white"
-            });
+            const key = pos2key([col, row]);
+            if (key)
+              pieces.set(key, {
+                role: roles[role],
+                color: c === role ? "black" : "white"
+              });
             ++col;
           }
         }
@@ -4039,7 +4046,7 @@
   }
   var initial, roles, letters;
   var init_fen = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/fen.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/fen.js"() {
       init_util();
       init_types();
       initial = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -4062,7 +4069,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/config.js
   function applyAnimation(state, config) {
     if (config.animation) {
       deepMerge(state.animation, config.animation);
@@ -4071,15 +4078,14 @@
     }
   }
   function configure(state, config) {
-    var _a, _b, _c;
-    if ((_a = config.movable) === null || _a === void 0 ? void 0 : _a.dests)
+    if (config.movable?.dests)
       state.movable.dests = void 0;
-    if ((_b = config.drawable) === null || _b === void 0 ? void 0 : _b.autoShapes)
+    if (config.drawable?.autoShapes)
       state.drawable.autoShapes = [];
     deepMerge(state, config);
     if (config.fen) {
       state.pieces = read(config.fen);
-      state.drawable.shapes = ((_c = config.drawable) === null || _c === void 0 ? void 0 : _c.shapes) || [];
+      state.drawable.shapes = config.drawable?.shapes || [];
     }
     if ("check" in config)
       setCheck(state, config.check || false);
@@ -4114,13 +4120,13 @@
     return proto === Object.prototype || proto === null;
   }
   var init_config = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/config.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/config.js"() {
       init_board();
       init_fen();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/anim.js
   function render(mutation, state) {
     const result = mutation(state);
     state.dom.redraw();
@@ -4204,7 +4210,7 @@
   }
   var anim, makePiece, closer, easing;
   var init_anim = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/anim.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/anim.js"() {
       init_util();
       anim = (mutation, state) => state.animation.enabled ? animate(mutation, state) : render(mutation, state);
       makePiece = (key, piece) => ({
@@ -4217,7 +4223,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/draw.js
   function start(state, e) {
     if (e.touches && e.touches.length > 1)
       return;
@@ -4279,17 +4285,15 @@
     }
   }
   function eventBrush(e) {
-    var _a;
     const modA = (e.shiftKey || e.ctrlKey) && isRightButton(e);
-    const modB = e.altKey || e.metaKey || ((_a = e.getModifierState) === null || _a === void 0 ? void 0 : _a.call(e, "AltGraph"));
+    const modB = e.altKey || e.metaKey || e.getModifierState?.("AltGraph");
     return brushes[(modA ? 1 : 0) + (modB ? 2 : 0)];
   }
   function addShape(drawable, cur) {
-    const sameShape = (s) => s.orig === cur.orig && s.dest === cur.dest;
-    const similar = drawable.shapes.find(sameShape);
+    const similar = drawable.shapes.find((s) => sameEndpoints(s, cur));
     if (similar)
-      drawable.shapes = drawable.shapes.filter((s) => !sameShape(s));
-    if (!similar || similar.brush !== cur.brush)
+      drawable.shapes = drawable.shapes.filter((s) => !sameEndpoints(s, cur));
+    if (!similar || !sameColor(similar, cur))
       drawable.shapes.push({
         orig: cur.orig,
         dest: cur.dest,
@@ -4301,16 +4305,18 @@
     if (drawable.onChange)
       drawable.onChange(drawable.shapes);
   }
-  var brushes;
+  var brushes, sameEndpoints, sameColor;
   var init_draw = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/draw.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/draw.js"() {
       init_board();
       init_util();
       brushes = ["green", "red", "blue", "yellow"];
+      sameEndpoints = (s1, s2) => s1.orig === s2.orig && s1.dest === s2.dest;
+      sameColor = (s1, s2) => s1.brush === s2.brush;
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/drag.js
   function start2(s, e) {
     if (!(s.trustAllEvents || e.isTrusted))
       return;
@@ -4323,7 +4329,7 @@
       return;
     const piece = s.pieces.get(orig);
     const previouslySelected = s.selected;
-    if (!previouslySelected && s.drawable.enabled && (s.drawable.eraseOnClick || !piece || piece.color !== s.turnColor))
+    if (!previouslySelected && s.drawable.enabled && (s.drawable.eraseOnMovablePieceClick || !piece || piece.color !== s.turnColor))
       clear(s);
     if (e.cancelable !== false && (!e.touches || s.blockTouchScroll || piece || previouslySelected || pieceCloseTo(s, position)))
       e.preventDefault();
@@ -4369,7 +4375,7 @@
     s.dom.redraw();
   }
   function pieceCloseTo(s, pos) {
-    const asWhite = whitePov(s), bounds = s.dom.bounds(), radiusSq = Math.pow(bounds.width / 8, 2);
+    const asWhite = whitePov(s), bounds = s.dom.bounds(), radiusSq = Math.pow(s.touchIgnoreRadius * bounds.width / 16, 2) * 2;
     for (const key of s.pieces.keys()) {
       const center = computeSquareCenter(key, asWhite, bounds);
       if (distanceSq(center, pos) <= radiusSq)
@@ -4398,11 +4404,10 @@
   }
   function processDrag(s) {
     requestAnimationFrame(() => {
-      var _a;
       const cur = s.draggable.current;
       if (!cur)
         return;
-      if ((_a = s.animation.current) === null || _a === void 0 ? void 0 : _a.plan.anims.has(cur.orig))
+      if (s.animation.current?.plan.anims.has(cur.orig))
         s.animation.current = void 0;
       const origPiece = s.pieces.get(cur.orig);
       if (!origPiece || !samePiece(origPiece, cur.piece))
@@ -4424,11 +4429,40 @@
             cur.pos[0] - bounds.left - bounds.width / 16,
             cur.pos[1] - bounds.top - bounds.height / 16
           ]);
-          cur.keyHasChanged || (cur.keyHasChanged = cur.orig !== getKeyAtDomPos(cur.pos, whitePov(s), bounds));
+          if (s.jsHover)
+            handleJsHover(s, cur);
+          else
+            cur.keyHasChanged || (cur.keyHasChanged = cur.orig !== getKeyAtDomPos(cur.pos, whitePov(s), bounds));
         }
       }
       processDrag(s);
     });
+  }
+  function handleJsHover(s, cur) {
+    const hoveredKey = getKeyAtDomPos(cur.pos, whitePov(s), s.dom.bounds());
+    if (cur.orig !== hoveredKey) {
+      cur.keyHasChanged = true;
+      if (hoveredKey) {
+        const isValidMove = s.movable.dests?.get(cur.orig)?.includes(hoveredKey) ?? s.premovable.dests?.includes(hoveredKey);
+        if (isValidMove) {
+          const hoveredValidDestSquare = s.dom.elements.board.querySelector(`.move-dest[data-key="${hoveredKey}"], .premove-dest[data-key="${hoveredKey}"]`);
+          if (hoveredValidDestSquare && !hoveredValidDestSquare.classList.contains("hover")) {
+            resetHoverState(s);
+            hoveredValidDestSquare.classList.add("hover");
+          }
+        } else {
+          resetHoverState(s);
+        }
+      }
+    } else {
+      resetHoverState(s);
+    }
+  }
+  function resetHoverState(s) {
+    const squares = s.dom.elements.board.querySelectorAll(`.move-dest, .premove-dest`);
+    if (squares.length > 0) {
+      squares.forEach((sq) => sq.classList.remove("hover"));
+    }
   }
   function move2(s, e) {
     if (s.draggable.current && (!e.touches || e.touches.length < 2)) {
@@ -4497,7 +4531,7 @@
     return;
   }
   var init_drag = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drag.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/drag.js"() {
       init_board();
       init_util();
       init_draw();
@@ -4505,7 +4539,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/explosion.js
   function explosion(state, keys) {
     state.exploding = { stage: 1, keys };
     state.dom.redraw();
@@ -4524,11 +4558,11 @@
     }
   }
   var init_explosion = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/explosion.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/explosion.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/api.js
   function start3(state, redrawAll) {
     function toggleOrientation2() {
       toggleOrientation(state);
@@ -4602,7 +4636,7 @@
         render((state2) => state2.drawable.autoShapes = shapes, state);
       },
       setShapes(shapes) {
-        render((state2) => state2.drawable.shapes = shapes, state);
+        render((state2) => state2.drawable.shapes = shapes.slice(), state);
       },
       getKeyAtDomPos(pos) {
         return getKeyAtDomPos(pos, whitePov(state), state.dom.bounds());
@@ -4619,7 +4653,7 @@
     };
   }
   var init_api = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/api.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/api.js"() {
       init_board();
       init_fen();
       init_config();
@@ -4629,7 +4663,7 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/state.js
   function defaults() {
     return {
       pieces: read(initial),
@@ -4643,8 +4677,10 @@
       disableContextMenu: false,
       addPieceZIndex: false,
       blockTouchScroll: false,
+      touchIgnoreRadius: 1,
       pieceKey: false,
       trustAllEvents: false,
+      jsHover: false,
       highlight: {
         lastMove: true,
         check: true
@@ -4664,6 +4700,7 @@
         enabled: true,
         showDests: true,
         castle: true,
+        additionalPremoveRequirements: (_) => true,
         events: {}
       },
       predroppable: {
@@ -4695,7 +4732,7 @@
         visible: true,
         // can view
         defaultSnapToValidMove: true,
-        eraseOnClick: true,
+        eraseOnMovablePieceClick: true,
         shapes: [],
         autoShapes: [],
         brushes: {
@@ -4714,7 +4751,8 @@
           },
           purple: { key: "purple", color: "#68217a", opacity: 0.65, lineWidth: 10 },
           pink: { key: "pink", color: "#ee2080", opacity: 0.5, lineWidth: 10 },
-          white: { key: "white", color: "white", opacity: 1, lineWidth: 10 }
+          white: { key: "white", color: "white", opacity: 1, lineWidth: 10 },
+          paleWhite: { key: "pwhite", color: "white", opacity: 0.6, lineWidth: 10 }
         },
         prevSvgHash: ""
       },
@@ -4722,120 +4760,129 @@
     };
   }
   var init_state = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/state.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/state.js"() {
       init_fen();
       init_util();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/svg.js
   function createDefs() {
     const defs = createElement("defs");
     const filter = setAttributes(createElement("filter"), { id: "cg-filter-blur" });
-    filter.appendChild(setAttributes(createElement("feGaussianBlur"), { stdDeviation: "0.019" }));
+    filter.appendChild(setAttributes(createElement("feGaussianBlur"), { stdDeviation: "0.013" }));
     defs.appendChild(filter);
     return defs;
   }
-  function renderSvg(state, shapesEl, customsEl) {
-    var _a;
+  function renderSvg(state, els) {
     const d = state.drawable, curD = d.current, cur = curD && curD.mouseSq ? curD : void 0, dests = /* @__PURE__ */ new Map(), bounds = state.dom.bounds(), nonPieceAutoShapes = d.autoShapes.filter((autoShape) => !autoShape.piece);
     for (const s of d.shapes.concat(nonPieceAutoShapes).concat(cur ? [cur] : [])) {
       if (!s.dest)
         continue;
-      const sources = (_a = dests.get(s.dest)) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new Set(), from = pos2user(orient(key2pos(s.orig), state.orientation), bounds), to = pos2user(orient(key2pos(s.dest), state.orientation), bounds);
-      sources.add(moveAngle(from, to));
+      const sources = dests.get(s.dest) ?? /* @__PURE__ */ new Set(), from = pos2user(orient(key2pos(s.orig), state.orientation), bounds), to = pos2user(orient(key2pos(s.dest), state.orientation), bounds);
+      sources.add(angleToSlot(moveAngle(from, to)));
       dests.set(s.dest, sources);
     }
-    const shapes = d.shapes.concat(nonPieceAutoShapes).map((s) => {
-      return {
+    const shapes = [];
+    const pendingEraseIdx = cur ? d.shapes.findIndex((s) => sameEndpoints(s, cur) && sameColor(s, cur)) : -1;
+    for (const [idx, s] of d.shapes.concat(nonPieceAutoShapes).entries()) {
+      const isPendingErase = pendingEraseIdx !== -1 && pendingEraseIdx === idx;
+      shapes.push({
         shape: s,
         current: false,
-        hash: shapeHash(s, isShort(s.dest, dests), false, bounds)
-      };
-    });
-    if (cur)
+        pendingErase: isPendingErase,
+        hash: shapeHash(s, isShort(s.dest, dests), false, bounds, isPendingErase, angleCount(s.dest, dests))
+      });
+    }
+    if (cur && pendingEraseIdx === -1)
       shapes.push({
         shape: cur,
         current: true,
-        hash: shapeHash(cur, isShort(cur.dest, dests), true, bounds)
+        hash: shapeHash(cur, isShort(cur.dest, dests), true, bounds, false, angleCount(cur.dest, dests)),
+        pendingErase: false
       });
     const fullHash = shapes.map((sc) => sc.hash).join(";");
     if (fullHash === state.drawable.prevSvgHash)
       return;
     state.drawable.prevSvgHash = fullHash;
-    const defsEl = shapesEl.querySelector("defs");
-    syncDefs(d, shapes, defsEl);
-    syncShapes(shapes, shapesEl.querySelector("g"), customsEl.querySelector("g"), (s) => renderShape(state, s, d.brushes, dests, bounds));
+    syncDefs(d, shapes, els);
+    syncShapes(shapes, els, (s) => renderShape(state, s, d.brushes, dests, bounds));
   }
-  function syncDefs(d, shapes, defsEl) {
-    var _a;
-    const brushes2 = /* @__PURE__ */ new Map();
-    let brush;
-    for (const s of shapes.filter((s2) => s2.shape.dest && s2.shape.brush)) {
-      brush = makeCustomBrush(d.brushes[s.shape.brush], s.shape.modifiers);
-      if ((_a = s.shape.modifiers) === null || _a === void 0 ? void 0 : _a.hilite)
-        brushes2.set(hilite(brush).key, hilite(brush));
-      brushes2.set(brush.key, brush);
-    }
-    const keysInDom = /* @__PURE__ */ new Set();
-    let el = defsEl.firstElementChild;
-    while (el) {
-      keysInDom.add(el.getAttribute("cgKey"));
-      el = el.nextElementSibling;
-    }
-    for (const [key, brush2] of brushes2.entries()) {
-      if (!keysInDom.has(key))
-        defsEl.appendChild(renderMarker(brush2));
-    }
-  }
-  function syncShapes(syncables, shapes, customs, renderShape3) {
-    const hashesInDom = /* @__PURE__ */ new Map();
-    for (const sc of syncables)
-      hashesInDom.set(sc.hash, false);
-    for (const root of [shapes, customs]) {
-      const toRemove = [];
-      let el = root.firstElementChild, elHash;
+  function syncDefs(d, shapes, els) {
+    for (const shapesEl of [els.shapes, els.shapesBelow]) {
+      const defsEl = shapesEl.querySelector("defs");
+      const thisPlane = shapes.filter((s) => shapesEl === els.shapesBelow === !!s.shape.below);
+      const brushes2 = /* @__PURE__ */ new Map();
+      for (const s of thisPlane.filter((s2) => s2.shape.dest && s2.shape.brush)) {
+        const brush = makeCustomBrush(d.brushes[s.shape.brush], s.shape.modifiers);
+        const { key, color } = hiliteOf(s.shape);
+        if (key && color)
+          brushes2.set(key, { key, color, opacity: 1, lineWidth: 1 });
+        brushes2.set(brush.key, brush);
+      }
+      const keysInDom = /* @__PURE__ */ new Set();
+      let el = defsEl.firstElementChild;
       while (el) {
-        elHash = el.getAttribute("cgHash");
-        if (hashesInDom.has(elHash))
-          hashesInDom.set(elHash, true);
-        else
-          toRemove.push(el);
+        keysInDom.add(el.getAttribute("cgKey"));
         el = el.nextElementSibling;
       }
-      for (const el2 of toRemove)
-        root.removeChild(el2);
-    }
-    for (const sc of syncables.filter((s) => !hashesInDom.get(s.hash))) {
-      for (const svg of renderShape3(sc)) {
-        if (svg.isCustom)
-          customs.appendChild(svg.el);
-        else
-          shapes.appendChild(svg.el);
+      for (const [key, brush] of brushes2.entries()) {
+        if (!keysInDom.has(key))
+          defsEl.appendChild(renderMarker(brush));
       }
     }
   }
-  function shapeHash({ orig, dest, brush, piece, modifiers, customSvg, label }, shorten, current, bounds) {
-    var _a, _b;
+  function syncShapes(shapes, els, renderShape3) {
+    for (const [shapesEl, customEl] of [
+      [els.shapes, els.custom],
+      [els.shapesBelow, els.customBelow]
+    ]) {
+      const [shapesG, customG] = [shapesEl, customEl].map((el) => el.querySelector("g"));
+      const thisPlane = shapes.filter((s) => shapesEl === els.shapesBelow === !!s.shape.below);
+      const hashesInDom = /* @__PURE__ */ new Map();
+      for (const sc of thisPlane)
+        hashesInDom.set(sc.hash, false);
+      for (const root of [shapesG, customG]) {
+        const toRemove = [];
+        let el = root.firstElementChild, elHash;
+        while (el) {
+          elHash = el.getAttribute("cgHash");
+          if (hashesInDom.has(elHash))
+            hashesInDom.set(elHash, true);
+          else
+            toRemove.push(el);
+          el = el.nextElementSibling;
+        }
+        for (const el2 of toRemove)
+          root.removeChild(el2);
+      }
+      for (const sc of thisPlane.filter((s) => !hashesInDom.get(s.hash))) {
+        for (const svg of renderShape3(sc)) {
+          if (svg.isCustom)
+            customG.appendChild(svg.el);
+          else
+            shapesG.appendChild(svg.el);
+        }
+      }
+    }
+  }
+  function shapeHash({ orig, dest, brush, piece, modifiers, customSvg, label, below }, shorten, current, bounds, pendingErase, angleCountOfDest) {
     return [
       bounds.width,
       bounds.height,
       current,
+      pendingErase && "pendingErase",
+      angleCountOfDest,
       orig,
       dest,
       brush,
       shorten && "-",
       piece && pieceHash(piece),
       modifiers && modifiersHash(modifiers),
-      customSvg && `custom-${textHash(customSvg.html)},${(_b = (_a = customSvg.center) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : "o"}`,
-      label && `label-${textHash(label.text)}`
+      customSvg && `custom-${textHash(customSvg.html)},${customSvg.center?.[0] ?? "o"}`,
+      label && `label-${textHash(label.text)}`,
+      below && "below"
     ].filter((x) => x).join(",");
-  }
-  function pieceHash(piece) {
-    return [piece.color, piece.role, piece.scale].filter((x) => x).join(",");
-  }
-  function modifiersHash(m) {
-    return [m.lineWidth, m.hilite && "*"].filter((x) => x).join(",");
   }
   function textHash(s) {
     let h = 0;
@@ -4844,25 +4891,24 @@
     }
     return h.toString();
   }
-  function renderShape(state, { shape, current, hash: hash2 }, brushes2, dests, bounds) {
-    var _a, _b;
+  function renderShape(state, { shape, current, pendingErase, hash: hash2 }, brushes2, dests, bounds) {
     const from = pos2user(orient(key2pos(shape.orig), state.orientation), bounds), to = shape.dest ? pos2user(orient(key2pos(shape.dest), state.orientation), bounds) : from, brush = shape.brush && makeCustomBrush(brushes2[shape.brush], shape.modifiers), slots = dests.get(shape.dest), svgs = [];
     if (brush) {
       const el = setAttributes(createElement("g"), { cgHash: hash2 });
       svgs.push({ el });
       if (from[0] !== to[0] || from[1] !== to[1])
-        el.appendChild(renderArrow(shape, brush, from, to, current, isShort(shape.dest, dests)));
+        el.appendChild(renderArrow(shape, brush, from, to, current, isShort(shape.dest, dests), pendingErase));
       else
-        el.appendChild(renderCircle(brushes2[shape.brush], from, current, bounds));
+        el.appendChild(renderCircle(brushes2[shape.brush], from, current, bounds, pendingErase));
     }
     if (shape.label) {
       const label = shape.label;
-      (_a = label.fill) !== null && _a !== void 0 ? _a : label.fill = shape.brush && brushes2[shape.brush].color;
+      label.fill ?? (label.fill = shape.brush && brushes2[shape.brush].color);
       const corner = shape.brush ? void 0 : "tr";
       svgs.push({ el: renderLabel(label, hash2, from, to, slots, corner), isCustom: true });
     }
     if (shape.customSvg) {
-      const on = (_b = shape.customSvg.center) !== null && _b !== void 0 ? _b : "orig";
+      const on = shape.customSvg.center ?? "orig";
       const [x, y] = on === "label" ? labelCoords(from, to, slots).map((c) => c - 0.5) : on === "dest" ? to : from;
       const el = setAttributes(createElement("g"), { transform: `translate(${x},${y})`, cgHash: hash2 });
       el.innerHTML = `<svg width="1" height="1" viewBox="0 0 100 100">${shape.customSvg.html}</svg>`;
@@ -4870,41 +4916,37 @@
     }
     return svgs;
   }
-  function renderCircle(brush, at, current, bounds) {
+  function renderCircle(brush, at, current, bounds, pendingErase) {
     const widths = circleWidth(), radius = (bounds.width + bounds.height) / (4 * Math.max(bounds.width, bounds.height));
     return setAttributes(createElement("circle"), {
       stroke: brush.color,
       "stroke-width": widths[current ? 0 : 1],
       fill: "none",
-      opacity: opacity(brush, current),
+      opacity: opacity(brush, current, pendingErase),
       cx: at[0],
       cy: at[1],
       r: radius - widths[1] / 2
     });
   }
-  function hilite(brush) {
-    return ["#ffffff", "#fff", "white"].includes(brush.color) ? hilites["hilitePrimary"] : hilites["hiliteWhite"];
-  }
-  function renderArrow(s, brush, from, to, current, shorten) {
-    var _a;
+  function renderArrow(s, brush, from, to, current, shorten, pendingErase) {
     function renderLine(isHilite) {
-      var _a2;
       const m = arrowMargin(shorten && !current), dx = to[0] - from[0], dy = to[1] - from[1], angle = Math.atan2(dy, dx), xo = Math.cos(angle) * m, yo = Math.sin(angle) * m;
+      const hilite = hiliteOf(s);
       return setAttributes(createElement("line"), {
-        stroke: isHilite ? hilite(brush).color : brush.color,
-        "stroke-width": lineWidth(brush, current) + (isHilite ? 0.04 : 0),
+        stroke: isHilite ? hilite.color : brush.color,
+        "stroke-width": lineWidth(brush, current) * (isHilite ? 1.14 : 1),
         "stroke-linecap": "round",
-        "marker-end": `url(#arrowhead-${isHilite ? hilite(brush).key : brush.key})`,
-        opacity: ((_a2 = s.modifiers) === null || _a2 === void 0 ? void 0 : _a2.hilite) ? 1 : opacity(brush, current),
+        "marker-end": `url(#arrowhead-${isHilite ? hilite.key : brush.key})`,
+        opacity: s.modifiers?.hilite && !pendingErase ? 1 : opacity(brush, current, pendingErase),
         x1: from[0],
         y1: from[1],
         x2: to[0] - xo,
         y2: to[1] - yo
       });
     }
-    if (!((_a = s.modifiers) === null || _a === void 0 ? void 0 : _a.hilite))
+    if (!s.modifiers?.hilite)
       return renderLine(false);
-    const g = createElement("g");
+    const g = setAttributes(createElement("g"), { opacity: brush.opacity });
     const blurred = setAttributes(createElement("g"), { filter: "url(#cg-filter-blur)" });
     blurred.appendChild(filterBox(from, to));
     blurred.appendChild(renderLine(true));
@@ -4930,7 +4972,6 @@
     return marker;
   }
   function renderLabel(label, hash2, from, to, slots, corner) {
-    var _a;
     const labelSize = 0.4, fontSize = labelSize * 0.75 ** label.text.length, at = labelCoords(from, to, slots), cornerOff = corner === "tr" ? 0.4 : 0, g = setAttributes(createElement("g"), {
       transform: `translate(${at[0] + cornerOff},${at[1] - cornerOff})`,
       cgHash: hash2
@@ -4940,7 +4981,7 @@
       "fill-opacity": corner ? 1 : 0.8,
       "stroke-opacity": corner ? 1 : 0.7,
       "stroke-width": 0.03,
-      fill: (_a = label.fill) !== null && _a !== void 0 ? _a : "#666",
+      fill: label.fill ?? "#666",
       stroke: "white"
     }));
     const labelEl = setAttributes(createElement("text"), {
@@ -4954,15 +4995,6 @@
     g.appendChild(labelEl);
     return g;
   }
-  function orient(pos, color) {
-    return color === "white" ? pos : [7 - pos[0], 7 - pos[1]];
-  }
-  function isShort(dest, dests) {
-    return true === (dest && dests.has(dest) && dests.get(dest).size > 1);
-  }
-  function createElement(tagName) {
-    return document.createElementNS("http://www.w3.org/2000/svg", tagName);
-  }
   function setAttributes(el, attrs) {
     for (const key in attrs) {
       if (Object.prototype.hasOwnProperty.call(attrs, key))
@@ -4970,25 +5002,9 @@
     }
     return el;
   }
-  function makeCustomBrush(base, modifiers) {
-    return !modifiers ? base : {
-      color: base.color,
-      opacity: Math.round(base.opacity * 10) / 10,
-      lineWidth: Math.round(modifiers.lineWidth || base.lineWidth),
-      key: [base.key, modifiers.lineWidth].filter((x) => x).join("")
-    };
-  }
-  function circleWidth() {
-    return [3 / 64, 4 / 64];
-  }
-  function lineWidth(brush, current) {
-    return (brush.lineWidth || 10) * (current ? 0.85 : 1) / 64;
-  }
-  function opacity(brush, current) {
-    return (brush.opacity || 1) * (current ? 0.9 : 1);
-  }
-  function arrowMargin(shorten) {
-    return (shorten ? 20 : 10) / 64;
+  function hiliteOf(shape) {
+    const hilite = shape.modifiers?.hilite;
+    return { key: hilite && `hilite-${hilite.replace("#", "")}`, color: hilite };
   }
   function pos2user(pos, bounds) {
     const xScale = Math.min(1, bounds.width / bounds.height);
@@ -5009,41 +5025,51 @@
       stroke: "none"
     });
   }
-  function moveAngle(from, to, asSlot = true) {
-    const angle = Math.atan2(to[1] - from[1], to[0] - from[0]) + Math.PI;
-    return asSlot ? (Math.round(angle * 8 / Math.PI) + 16) % 16 : angle;
-  }
-  function dist(from, to) {
-    return Math.sqrt([from[0] - to[0], from[1] - to[1]].reduce((acc, x) => acc + x * x, 0));
-  }
   function labelCoords(from, to, slots) {
     let mag = dist(from, to);
-    const angle = moveAngle(from, to, false);
+    const angle = moveAngle(from, to);
     if (slots) {
       mag -= 33 / 64;
-      if (slots.size > 1) {
+      if (anyTwoCloserThan90Degrees(slots)) {
         mag -= 10 / 64;
-        const slot = moveAngle(from, to);
-        if (slots.has((slot + 1) % 16) || slots.has((slot + 15) % 16)) {
-          if (slot & 1)
-            mag -= 0.4;
-        }
+        const slot = angleToSlot(angle);
+        if (slot & 1 && [-1, 1].some((s) => slots.has(rotateAngleSlot(slot, s))))
+          mag -= 0.4;
       }
     }
     return [from[0] - Math.cos(angle) * mag, from[1] - Math.sin(angle) * mag].map((c) => c + 0.5);
   }
-  var hilites;
+  var pieceHash, modifiersHash, orient, mod, rotateAngleSlot, anyTwoCloserThan90Degrees, isShort, createElement, angleCount, makeCustomBrush, circleWidth, lineWidth, opacity, arrowMargin, angleToSlot, moveAngle, dist;
   var init_svg = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/svg.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/svg.js"() {
       init_util();
-      hilites = {
-        hilitePrimary: { key: "hilitePrimary", color: "#3291ff", opacity: 1, lineWidth: 1 },
-        hiliteWhite: { key: "hiliteWhite", color: "#ffffff", opacity: 1, lineWidth: 1 }
+      init_draw();
+      pieceHash = (piece) => [piece.color, piece.role, piece.scale].filter((x) => x).join(",");
+      modifiersHash = (m) => [m.lineWidth, m.hilite].filter((x) => x).join(",");
+      orient = (pos, color) => color === "white" ? pos : [7 - pos[0], 7 - pos[1]];
+      mod = (n, m) => (n % m + m) % m;
+      rotateAngleSlot = (slot, steps) => mod(slot + steps, 16);
+      anyTwoCloserThan90Degrees = (slots) => [...slots].some((slot) => [-3, -2, -1, 1, 2, 3].some((i) => slots.has(rotateAngleSlot(slot, i))));
+      isShort = (dest, dests) => !!dest && dests.has(dest) && anyTwoCloserThan90Degrees(dests.get(dest));
+      createElement = (tagName) => document.createElementNS("http://www.w3.org/2000/svg", tagName);
+      angleCount = (dest, dests) => dest && dests.has(dest) ? dests.get(dest).size : 0;
+      makeCustomBrush = (base, modifiers) => !modifiers ? base : {
+        color: base.color,
+        opacity: Math.round(base.opacity * 10) / 10,
+        lineWidth: Math.round(modifiers.lineWidth || base.lineWidth),
+        key: [base.key, modifiers.lineWidth].filter((x) => x).join("")
       };
+      circleWidth = () => [3 / 64, 4 / 64];
+      lineWidth = (brush, current) => (brush.lineWidth || 10) * (current ? 0.85 : 1) / 64;
+      opacity = (brush, current, pendingErase) => (brush.opacity || 1) * (pendingErase ? 0.6 : current ? 0.9 : 1);
+      arrowMargin = (shorten) => (shorten ? 20 : 10) / 64;
+      angleToSlot = (angle) => mod(Math.round(angle * 8 / Math.PI), 16);
+      moveAngle = (from, to) => Math.atan2(to[1] - from[1], to[0] - from[0]) + Math.PI;
+      dist = (from, to) => Math.sqrt([from[0] - to[0], from[1] - to[1]].reduce((acc, x) => acc + x * x, 0));
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/wrap.js
   function renderWrap(element, s) {
     element.innerHTML = "";
     element.classList.add("cg-wrap");
@@ -5054,26 +5080,19 @@
     element.appendChild(container);
     const board = createEl("cg-board");
     container.appendChild(board);
-    let svg;
-    let customSvg;
+    let shapesBelow;
+    let shapes;
+    let customBelow;
+    let custom;
     let autoPieces;
     if (s.drawable.visible) {
-      svg = setAttributes(createElement("svg"), {
-        class: "cg-shapes",
-        viewBox: "-4 -4 8 8",
-        preserveAspectRatio: "xMidYMid slice"
-      });
-      svg.appendChild(createDefs());
-      svg.appendChild(createElement("g"));
-      customSvg = setAttributes(createElement("svg"), {
-        class: "cg-custom-svgs",
-        viewBox: "-3.5 -3.5 8 8",
-        preserveAspectRatio: "xMidYMid slice"
-      });
-      customSvg.appendChild(createElement("g"));
+      [shapesBelow, shapes] = ["cg-shapes-below", "cg-shapes"].map((cls) => svgContainer(cls, true));
+      [customBelow, custom] = ["cg-custom-below", "cg-custom-svgs"].map((cls) => svgContainer(cls, false));
       autoPieces = createEl("cg-auto-pieces");
-      container.appendChild(svg);
-      container.appendChild(customSvg);
+      container.appendChild(shapesBelow);
+      container.appendChild(customBelow);
+      container.appendChild(shapes);
+      container.appendChild(custom);
       container.appendChild(autoPieces);
     }
     if (s.coordinates) {
@@ -5081,47 +5100,51 @@
       const ranksPositionClass = s.ranksPosition === "left" ? " left" : "";
       if (s.coordinatesOnSquares) {
         const rankN = s.orientation === "white" ? (i) => i + 1 : (i) => 8 - i;
-        files.forEach((f, i) => container.appendChild(renderCoords(ranks.map((r) => f + r), "squares rank" + rankN(i) + orientClass + ranksPositionClass)));
+        files.forEach((f, i) => container.appendChild(renderCoords(ranks.map((r) => f + r), "squares rank" + rankN(i) + orientClass + ranksPositionClass, i % 2 === 0 ? "black" : "white")));
       } else {
-        container.appendChild(renderCoords(ranks, "ranks" + orientClass + ranksPositionClass));
-        container.appendChild(renderCoords(files, "files" + orientClass));
+        container.appendChild(renderCoords(ranks, "ranks" + orientClass + ranksPositionClass, s.ranksPosition === "right" === (s.orientation === "white") ? "white" : "black"));
+        container.appendChild(renderCoords(files, "files" + orientClass, opposite(s.orientation)));
       }
     }
     let ghost;
-    if (s.draggable.enabled && s.draggable.showGhost) {
+    if (!s.viewOnly && s.draggable.enabled && s.draggable.showGhost) {
       ghost = createEl("piece", "ghost");
       setVisible(ghost, false);
       container.appendChild(ghost);
     }
-    return {
-      board,
-      container,
-      wrap: element,
-      ghost,
-      svg,
-      customSvg,
-      autoPieces
-    };
+    return { board, container, wrap: element, ghost, shapes, shapesBelow, custom, customBelow, autoPieces };
   }
-  function renderCoords(elems, className) {
+  function svgContainer(cls, isShapes) {
+    const svg = setAttributes(createElement("svg"), {
+      class: cls,
+      viewBox: isShapes ? "-4 -4 8 8" : "-3.5 -3.5 8 8",
+      preserveAspectRatio: "xMidYMid slice"
+    });
+    if (isShapes)
+      svg.appendChild(createDefs());
+    svg.appendChild(createElement("g"));
+    return svg;
+  }
+  function renderCoords(elems, className, firstColor) {
     const el = createEl("coords", className);
     let f;
-    for (const elem of elems) {
-      f = createEl("coord");
+    elems.forEach((elem, i) => {
+      const light = i % 2 === (firstColor === "white" ? 0 : 1);
+      f = createEl("coord", `coord-${light ? "light" : "dark"}`);
       f.textContent = elem;
       el.appendChild(f);
-    }
+    });
     return el;
   }
   var init_wrap = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/wrap.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/wrap.js"() {
       init_util();
       init_types();
       init_svg();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/drop.js
   function drop(s, e) {
     if (!s.dropmode.active)
       return;
@@ -5138,14 +5161,14 @@
     s.dom.redraw();
   }
   var init_drop = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/drop.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/drop.js"() {
       init_board();
       init_util();
       init_drag();
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/events.js
   function bindBoard(s, onResize) {
     const boardEl = s.dom.elements.board;
     if ("ResizeObserver" in window)
@@ -5186,7 +5209,7 @@
   }
   var startDragOrDraw, dragOrDraw;
   var init_events = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/events.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/events.js"() {
       init_drag();
       init_draw();
       init_drop();
@@ -5216,10 +5239,10 @@
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/render.js
   function render2(s) {
-    const asWhite = whitePov(s), posToTranslate2 = posToTranslate(s.dom.bounds()), boardEl = s.dom.elements.board, pieces = s.pieces, curAnim = s.animation.current, anims = curAnim ? curAnim.plan.anims : /* @__PURE__ */ new Map(), fadings = curAnim ? curAnim.plan.fadings : /* @__PURE__ */ new Map(), curDrag = s.draggable.current, squares = computeSquareClasses(s), samePieces = /* @__PURE__ */ new Set(), sameSquares = /* @__PURE__ */ new Set(), movedPieces = /* @__PURE__ */ new Map(), movedSquares = /* @__PURE__ */ new Map();
-    let k, el, pieceAtKey, elPieceName, anim2, fading, pMvdset, pMvd, sMvdset, sMvd;
+    const asWhite = whitePov(s), posToTranslate2 = posToTranslate(s.dom.bounds()), boardEl = s.dom.elements.board, pieces = s.pieces, curAnim = s.animation.current, anims = curAnim ? curAnim.plan.anims : /* @__PURE__ */ new Map(), fadings = curAnim ? curAnim.plan.fadings : /* @__PURE__ */ new Map(), curDrag = s.draggable.current, samePieces = /* @__PURE__ */ new Set(), movedPieces = /* @__PURE__ */ new Map(), desiredSquares = computeSquareClasses(s), availableSquares = /* @__PURE__ */ new Map();
+    let k, el, pieceAtKey, elPieceName, anim2, fading, pMvdset, pMvd, sAvail;
     el = boardEl.firstChild;
     while (el) {
       k = el.cgKey;
@@ -5251,43 +5274,46 @@
             if (s.addPieceZIndex)
               el.style.zIndex = posZIndex(key2pos(k), asWhite);
           }
-          if (elPieceName === pieceNameOf(pieceAtKey) && (!fading || !el.cgFading)) {
+          if (elPieceName === pieceNameOf(pieceAtKey) && (!fading || !el.cgFading))
             samePieces.add(k);
-          } else {
-            if (fading && elPieceName === pieceNameOf(fading)) {
-              el.classList.add("fading");
-              el.cgFading = true;
-            } else {
-              appendValue(movedPieces, elPieceName, el);
-            }
-          }
-        } else {
+          else if (fading && elPieceName === pieceNameOf(fading)) {
+            el.classList.add("fading");
+            el.cgFading = true;
+          } else
+            appendValue(movedPieces, elPieceName, el);
+        } else
           appendValue(movedPieces, elPieceName, el);
-        }
       } else if (isSquareNode(el)) {
-        const cn = el.className;
-        if (squares.get(k) === cn)
-          sameSquares.add(k);
-        else
-          appendValue(movedSquares, cn, el);
+        const cls = el.className;
+        if (desiredSquares.get(k) === cls) {
+          setVisible(el, true);
+          desiredSquares.delete(k);
+        } else
+          appendValue(availableSquares, cls, el);
       }
       el = el.nextSibling;
     }
-    for (const [sk, className] of squares) {
-      if (!sameSquares.has(sk)) {
-        sMvdset = movedSquares.get(className);
-        sMvd = sMvdset && sMvdset.pop();
-        const translation = posToTranslate2(key2pos(sk), asWhite);
-        if (sMvd) {
-          sMvd.cgKey = sk;
-          translate(sMvd, translation);
-        } else {
-          const squareNode = createEl("square", className);
-          squareNode.cgKey = sk;
-          translate(squareNode, translation);
-          boardEl.insertBefore(squareNode, boardEl.firstChild);
-        }
+    for (const [sk, className] of desiredSquares) {
+      sAvail = availableSquares.get(className)?.pop();
+      const translation = posToTranslate2(key2pos(sk), asWhite);
+      if (sAvail) {
+        sAvail.cgKey = sk;
+        if (s.jsHover)
+          sAvail.dataset["key"] = sk;
+        translate(sAvail, translation);
+        setVisible(sAvail, true);
+      } else {
+        const squareNode = createEl("square", className);
+        squareNode.cgKey = sk;
+        if (s.jsHover)
+          squareNode.dataset["key"] = sk;
+        translate(squareNode, translation);
+        boardEl.insertBefore(squareNode, boardEl.firstChild);
       }
+    }
+    for (const [_, nodes] of availableSquares.entries()) {
+      for (const node2 of nodes)
+        setVisible(node2, false);
     }
     for (const [k2, p] of pieces) {
       anim2 = anims.get(k2);
@@ -5328,8 +5354,6 @@
     }
     for (const nodes of movedPieces.values())
       removeNodes(s, nodes);
-    for (const nodes of movedSquares.values())
-      removeNodes(s, nodes);
   }
   function renderResized(s) {
     const asWhite = whitePov(s), posToTranslate2 = posToTranslate(s.dom.bounds());
@@ -5342,7 +5366,6 @@
     }
   }
   function updateBounds(s) {
-    var _a, _b;
     const bounds = s.dom.elements.wrap.getBoundingClientRect();
     const container = s.dom.elements.container;
     const ratio = bounds.height / bounds.width;
@@ -5351,8 +5374,8 @@
     container.style.width = width + "px";
     container.style.height = height + "px";
     s.dom.bounds.clear();
-    (_a = s.addDimensionsCssVarsTo) === null || _a === void 0 ? void 0 : _a.style.setProperty("---cg-width", width + "px");
-    (_b = s.addDimensionsCssVarsTo) === null || _b === void 0 ? void 0 : _b.style.setProperty("---cg-height", height + "px");
+    s.addDimensionsCssVarsTo?.style.setProperty("---cg-width", width + "px");
+    s.addDimensionsCssVarsTo?.style.setProperty("---cg-height", height + "px");
   }
   function removeNodes(s, nodes) {
     for (const node2 of nodes)
@@ -5365,27 +5388,19 @@
     return `${z}`;
   }
   function computeSquareClasses(s) {
-    var _a, _b, _c;
     const squares = /* @__PURE__ */ new Map();
     if (s.lastMove && s.highlight.lastMove)
-      for (const k of s.lastMove) {
-        addSquare(squares, k, "last-move");
-      }
+      for (const [i, k] of s.lastMove.entries())
+        addSquare(squares, i === 1 ? normalizeLastMoveStandardRookCastle(s, k) : k, "last-move");
     if (s.check && s.highlight.check)
       addSquare(squares, s.check, "check");
     if (s.selected) {
       addSquare(squares, s.selected, "selected");
       if (s.movable.showDests) {
-        const dests = (_a = s.movable.dests) === null || _a === void 0 ? void 0 : _a.get(s.selected);
-        if (dests)
-          for (const k of dests) {
-            addSquare(squares, k, "move-dest" + (s.pieces.has(k) ? " oc" : ""));
-          }
-        const pDests = (_c = (_b = s.premovable.customDests) === null || _b === void 0 ? void 0 : _b.get(s.selected)) !== null && _c !== void 0 ? _c : s.premovable.dests;
-        if (pDests)
-          for (const k of pDests) {
-            addSquare(squares, k, "premove-dest" + (s.pieces.has(k) ? " oc" : ""));
-          }
+        for (const k of s.movable.dests?.get(s.selected) ?? [])
+          addSquare(squares, k, "move-dest" + (s.pieces.has(k) ? " oc" : ""));
+        for (const k of s.premovable.customDests?.get(s.selected) ?? s.premovable.dests ?? [])
+          addSquare(squares, k, "premove-dest" + (s.pieces.has(k) ? " oc" : ""));
       }
     }
     const premove2 = s.premovable.current;
@@ -5419,18 +5434,20 @@
     else
       map.set(key, [value]);
   }
-  var isPieceNode, isSquareNode, pieceNameOf;
+  var isPieceNode, isSquareNode, pieceNameOf, normalizeLastMoveStandardRookCastle;
   var init_render = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/render.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/render.js"() {
+      init_util();
       init_util();
       init_board();
       isPieceNode = (el) => el.tagName === "PIECE";
       isSquareNode = (el) => el.tagName === "SQUARE";
       pieceNameOf = (piece) => `${piece.color} ${piece.role}`;
+      normalizeLastMoveStandardRookCastle = (s, k) => !!s.lastMove?.[1] && !s.pieces.has(s.lastMove[1]) && s.lastMove[0][0] === "e" && ["h", "a"].includes(s.lastMove[1][0]) && s.lastMove[0][1] === s.lastMove[1][1] && squaresBetween(...key2pos(s.lastMove[0]), ...key2pos(s.lastMove[1])).some((sq) => s.pieces.has(sq)) ? (k > s.lastMove[0] ? "g" : "c") + k[1] : k;
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/sync.js
   function syncShapes2(shapes, root, renderShape3) {
     const hashesInDom = /* @__PURE__ */ new Map(), toRemove = [];
     for (const sc of shapes)
@@ -5452,37 +5469,36 @@
     }
   }
   var init_sync = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/sync.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/sync.js"() {
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/autoPieces.js
   function render3(state, autoPieceEl) {
     const autoPieces = state.drawable.autoShapes.filter((autoShape) => autoShape.piece);
     const autoPieceShapes = autoPieces.map((s) => {
       return {
         shape: s,
         hash: hash(s),
-        current: false
+        current: false,
+        pendingErase: false
       };
     });
     syncShapes2(autoPieceShapes, autoPieceEl, (shape) => renderShape2(state, shape, state.dom.bounds()));
   }
   function renderResized2(state) {
-    var _a;
     const asWhite = whitePov(state), posToTranslate2 = posToTranslate(state.dom.bounds());
-    let el = (_a = state.dom.elements.autoPieces) === null || _a === void 0 ? void 0 : _a.firstChild;
+    let el = state.dom.elements.autoPieces?.firstChild;
     while (el) {
       translateAndScale(el, posToTranslate2(key2pos(el.cgKey), asWhite), el.cgScale);
       el = el.nextSibling;
     }
   }
   function renderShape2(state, { shape, hash: hash2 }, bounds) {
-    var _a, _b, _c;
     const orig = shape.orig;
-    const role = (_a = shape.piece) === null || _a === void 0 ? void 0 : _a.role;
-    const color = (_b = shape.piece) === null || _b === void 0 ? void 0 : _b.color;
-    const scale = (_c = shape.piece) === null || _c === void 0 ? void 0 : _c.scale;
+    const role = shape.piece?.role;
+    const color = shape.piece?.color;
+    const scale = shape.piece?.scale;
     const pieceEl = createEl("piece", `${role} ${color}`);
     pieceEl.setAttribute("cgHash", hash2);
     pieceEl.cgKey = orig;
@@ -5492,18 +5508,15 @@
   }
   var hash;
   var init_autoPieces = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/autoPieces.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/autoPieces.js"() {
       init_util();
       init_board();
       init_sync();
-      hash = (autoPiece) => {
-        var _a, _b, _c;
-        return [autoPiece.orig, (_a = autoPiece.piece) === null || _a === void 0 ? void 0 : _a.role, (_b = autoPiece.piece) === null || _b === void 0 ? void 0 : _b.color, (_c = autoPiece.piece) === null || _c === void 0 ? void 0 : _c.scale].join(",");
-      };
+      hash = (autoPiece) => [autoPiece.orig, autoPiece.piece?.role, autoPiece.piece?.color, autoPiece.piece?.scale].join(",");
     }
   });
 
-  // node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js
+  // node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/chessground.js
   function Chessground(element, config) {
     const maybeState = defaults();
     configure(maybeState, config || {});
@@ -5513,8 +5526,8 @@
         render2(state);
         if (elements.autoPieces)
           render3(state, elements.autoPieces);
-        if (!skipSvg && elements.svg)
-          renderSvg(state, elements.svg, elements.customSvg);
+        if (!skipSvg && elements.shapes)
+          renderSvg(state, elements);
       }, onResize = () => {
         updateBounds(state);
         renderResized(state);
@@ -5553,7 +5566,7 @@
     };
   }
   var init_chessground = __esm({
-    "node_modules/.pnpm/chessground@9.2.1/node_modules/chessground/dist/chessground.js"() {
+    "node_modules/.pnpm/@lichess-org+chessground@10.1.0/node_modules/@lichess-org/chessground/dist/chessground.js"() {
       init_api();
       init_config();
       init_state();

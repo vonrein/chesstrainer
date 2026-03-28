@@ -7,6 +7,7 @@
     "esModuleInterop": true,
     "outDir": "dist"
   },
-  "include": ["*.ts"]
+  "include": ["*.ts"],
+  "exclude":["boardList.ts"]
 }
 

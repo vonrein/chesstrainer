@@ -1,4 +1,4 @@
-import { Boards } from './boardList';
+/*import { Boards } from './boardList';
 
 document.addEventListener("DOMContentLoaded",  () => {
   const container = document.getElementById('chessground-examples');
@@ -22,4 +22,4 @@ document.addEventListener("DOMContentLoaded",  () => {
     boards.redraw();
   });
   
-});
+});*/

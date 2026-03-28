@@ -1,8 +1,8 @@
 import { Chess } from 'chess.js'
-import { Chessground } from 'chessground'
-import { Api } from 'chessground/api'
-import { Config } from 'chessground/config'
-import { Key } from 'chessground/types'
+import { Chessground } from '@lichess-org/chessground'
+import { Api } from '@lichess-org/chessground/api'
+import { Config } from '@lichess-org/chessground/config'
+import { Key } from '@lichess-org/chessground/types'
 import { applyTheme } from './theme'
 import { computeDests, getTurnColor, parseUCIMove, promoteAble } from './chessUtils'
 

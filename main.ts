@@ -1,6 +1,6 @@
-import { Chessground } from 'chessground';
-import { Config as CgConfig } from 'chessground/config';
-import type { Key } from 'chessground/types';
+import { Chessground } from '@lichess-org/chessground';
+import { Config as CgConfig } from '@lichess-org/chessground/config';
+import type { Key } from '@lichess-org/chessground/types';
 import type { UiHandles } from './uiHandles';
 import { secondsToMinutes } from './uiHandles';
 import { applyTheme } from "./theme";

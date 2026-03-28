@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
-import { Chessground } from "chessground";
-import { Color } from "chessground/types";
+import { Chessground } from "@lichess-org/chessground";
+import { Color } from "@lichess-org/chessground/types";
 import { computeDests,getTurnColor,parseUCIMove,promoteAble } from "./chessUtils";
 import { VNode } from "snabbdom/vnode";
 import { h } from "snabbdom";
